@@ -16,10 +16,7 @@
       justify-content: center;
       align-items: center;
       touch-action: none;
-      -webkit-user-select: none;
       user-select: none;
-      overscroll-behavior: none;
-      -webkit-tap-highlight-color: transparent;
     }
 
     #container {
@@ -32,13 +29,10 @@
 
     .soroban {
       display: flex;
-      justify-content: center;
-      align-items: center;
       background: #8B4513;
       padding: 10px;
       border-radius: 10px;
       box-shadow: 0 0 15px rgba(0,0,0,0.3);
-      overflow: hidden;
     }
 
     .rod {
@@ -46,11 +40,11 @@
       width: 60px;
       height: 250px;
       background: #D2B48C;
+      margin: 0 5px;
       border-radius: 5px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: space-between;
     }
 
     .rod-line {
@@ -69,6 +63,9 @@
 
     .heaven {
       height: 12%;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
     }
 
     .gap-space {
@@ -77,7 +74,7 @@
 
     .earth {
       height: 52%;
-      margin-top: 5px;
+      position: relative;
     }
 
     .bar {
@@ -91,55 +88,28 @@
 
     .bead {
       position: absolute;
-      top: 0;
       width: 50px;
       height: 30px;
       background: radial-gradient(circle at 30% 30%, #444, #111);
       border-radius: 50% / 40%;
       box-shadow: inset -2px -2px 5px rgba(255, 255, 255, 0.2),
                   inset 2px 2px 5px rgba(0, 0, 0, 0.4);
-      transition: transform 0.2s, background-color 0.2s;
       z-index: 3;
       touch-action: none;
     }
 
     .bead.active {
       background: radial-gradient(circle at 30% 30%, #FFD700, #FFA500);
-      box-shadow: inset -2px -2px 5px rgba(255, 255, 255, 0.4),
-                  inset 2px 2px 5px rgba(0, 0, 0, 0.3);
     }
 
     @media (max-width: 768px) {
-      .soroban {
-        flex-wrap: wrap;
-        gap: 5px;
-      }
-
-      .rod {
-        width: 60px;
-        height: 220px;
-      }
-
-      .bead {
-        width: 40px;
-        height: 25px;
-      }
+      .rod { width: 50px; }
+      .bead { width: 40px; height: 25px; }
     }
 
     @media (max-width: 480px) {
-      .soroban {
-        gap: 3px;
-      }
-
-      .rod {
-        width: 50px;
-        height: 200px;
-      }
-
-      .bead {
-        width: 35px;
-        height: 22px;
-      }
+      .rod { width: 45px; }
+      .bead { width: 35px; height: 22px; }
     }
 
     @media screen and (orientation: portrait) {
@@ -165,102 +135,131 @@
 </head>
 <body>
   <div id="container">
-    <div class="soroban">
-      <!-- 7 rods -->
-      <!-- Repeat this rod 7 times -->
-      ${[...Array(7)].map(() => `
-        <div class="rod">
-          <div class="rod-line"></div>
-          <div class="heaven">
-            <div class="bead heaven"></div>
-          </div>
-          <div class="gap-space"></div>
-          <div class="earth">
-            <div class="bead earth"></div>
-            <div class="bead earth"></div>
-            <div class="bead earth"></div>
-            <div class="bead earth"></div>
-          </div>
-          <div class="bar"></div>
-        </div>
-      `).join('')}
+    <div class="soroban" id="soroban">
+      <!-- Rods generated here -->
     </div>
   </div>
 
   <script>
+    const soroban = document.getElementById('soroban');
+
+    // Create 7 rods
+    for (let i = 0; i < 7; i++) {
+      const rod = document.createElement('div');
+      rod.className = 'rod';
+
+      const rodLine = document.createElement('div');
+      rodLine.className = 'rod-line';
+      rod.appendChild(rodLine);
+
+      const heaven = document.createElement('div');
+      heaven.className = 'heaven';
+      const heavenBead = document.createElement('div');
+      heavenBead.className = 'bead heaven';
+      heavenBead.style.top = '0px';
+      heaven.appendChild(heavenBead);
+
+      const gap = document.createElement('div');
+      gap.className = 'gap-space';
+
+      const earth = document.createElement('div');
+      earth.className = 'earth';
+
+      for (let j = 0; j < 4; j++) {
+        const earthBead = document.createElement('div');
+        earthBead.className = 'bead earth';
+        earthBead.style.top = `${j * 35}px`;
+        earth.appendChild(earthBead);
+      }
+
+      const bar = document.createElement('div');
+      bar.className = 'bar';
+
+      rod.appendChild(heaven);
+      rod.appendChild(gap);
+      rod.appendChild(earth);
+      rod.appendChild(bar);
+      soroban.appendChild(rod);
+    }
+
+    let startY = 0;
+    let startTop = 0;
+    let activeBeads = [];
+
+    function getTouchY(e) {
+      return e.touches[0].clientY;
+    }
+
     document.querySelectorAll('.bead').forEach(bead => {
-      let startY = 0;
-      let startTop = 0;
-      let maxMove = 0;
-      let minMove = 0;
-
-      const isHeaven = bead.classList.contains('heaven');
-      const isEarth = bead.classList.contains('earth');
-
       bead.addEventListener('touchstart', e => {
-        const touch = e.touches[0];
-        startY = touch.clientY;
+        startY = getTouchY(e);
         startTop = parseFloat(bead.style.top || 0);
+        activeBeads = [];
 
-        const containerHeight = bead.parentElement.offsetHeight;
-        const beadHeight = bead.offsetHeight;
+        const rod = bead.closest('.rod');
+        const isHeaven = bead.classList.contains('heaven');
+        const isEarth = bead.classList.contains('earth');
 
         if (isHeaven) {
-          maxMove = containerHeight - beadHeight;
-          minMove = 0;
+          activeBeads = [bead];
         } else if (isEarth) {
-          maxMove = 0;
-          minMove = -(containerHeight - beadHeight);
+          const allEarthBeads = Array.from(rod.querySelectorAll('.bead.earth'));
+          const index = allEarthBeads.indexOf(bead);
+          const moveUp = bead.getBoundingClientRect().top > getTouchY(e);
+          activeBeads = moveUp ? allEarthBeads.slice(0, index + 1) : allEarthBeads.slice(index);
         }
 
-        bead.style.transition = 'none';
+        activeBeads.forEach(b => {
+          b.startTop = parseFloat(b.style.top || 0);
+          b.style.transition = 'none';
+        });
       });
 
       bead.addEventListener('touchmove', e => {
-        const touch = e.touches[0];
-        const deltaY = touch.clientY - startY;
-        let newTop = startTop + deltaY;
+        const currentY = getTouchY(e);
+        const deltaY = currentY - startY;
 
-        // Clamp within range
-        if (newTop > maxMove) newTop = maxMove;
-        if (newTop < minMove) newTop = minMove;
+        activeBeads.forEach(b => {
+          const isHeaven = b.classList.contains('heaven');
+          const isEarth = b.classList.contains('earth');
+          let newTop = b.startTop + deltaY;
 
-        bead.style.top = newTop + 'px';
+          if (isHeaven) {
+            newTop = Math.max(0, Math.min(newTop, 50));
+          } else if (isEarth) {
+            newTop = Math.max(0, Math.min(newTop, 120));
+          }
+
+          b.style.top = `${newTop}px`;
+        });
       });
 
       bead.addEventListener('touchend', () => {
-        bead.style.transition = 'top 0.2s';
+        activeBeads.forEach(b => {
+          b.style.transition = 'top 0.2s';
+          const isHeaven = b.classList.contains('heaven');
+          const isEarth = b.classList.contains('earth');
+          const y = parseFloat(b.style.top);
 
-        if (isHeaven) {
-          if (parseFloat(bead.style.top || 0) > 25) {
-            bead.classList.add('active');
-            bead.style.top = '45px';
-          } else {
-            bead.classList.remove('active');
-            bead.style.top = '0px';
-          }
-        } else if (isEarth) {
-          const siblings = Array.from(bead.parentElement.children);
-          const index = siblings.indexOf(bead);
-
-          if (parseFloat(bead.style.top || 0) < -40) {
-            const allBeforeActive = siblings.slice(0, index).every(b => b.classList.contains('active'));
-            if (allBeforeActive) {
-              bead.classList.add('active');
-              bead.style.top = '-60px';
+          if (isHeaven) {
+            if (y > 25) {
+              b.style.top = '45px';
+              b.classList.add('active');
             } else {
-              bead.style.top = '0px';
+              b.style.top = '0px';
+              b.classList.remove('active');
             }
-          } else {
-            const allAfterInactive = siblings.slice(index + 1).every(b => !b.classList.contains('active'));
-            if (allAfterInactive) {
-              bead.classList.remove('active');
-              bead.style.top = '0px';
+          } else if (isEarth) {
+            if (y < 60) {
+              b.style.top = '0px';
+              b.classList.remove('active');
             } else {
-              bead.style.top = '-60px';
+              b.style.top = '120px';
+              b.classList.add('active');
             }
           }
-        }
+        });
+        activeBeads = [];
       });
     });
   </script>
