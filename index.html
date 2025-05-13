@@ -180,77 +180,79 @@
   </div>
 
   <script>
-    const activeTouches = {};
+  const activeTouches = new Map();
 
-    document.querySelectorAll('.bead').forEach(bead => {
-      bead.addEventListener('touchstart', e => {
-        if (e.touches.length > 2) return;
+  document.querySelectorAll('.bead').forEach(bead => {
+    let originalY = 0;
+    let currentDeltaY = 0;
 
-        for (let touch of e.changedTouches) {
-          activeTouches[touch.identifier] = {
-            bead: bead,
-            startY: touch.clientY
-          };
-        }
-      });
-
-      bead.addEventListener('touchmove', e => {
-        for (let touch of e.changedTouches) {
-          const data = activeTouches[touch.identifier];
-          if (!data) continue;
-
-          const deltaY = touch.clientY - data.startY;
-
-          if (data.bead.classList.contains('heaven') && deltaY < -30 && data.bead.classList.contains('active')) {
-            data.bead.classList.remove('active');
-            delete activeTouches[touch.identifier];
-          } else if (data.bead.classList.contains('earth') && deltaY > 30 && data.bead.classList.contains('active')) {
-            const allEarth = Array.from(data.bead.parentElement.children);
-            const index = allEarth.indexOf(data.bead);
-            const allAfterInactive = allEarth.slice(index + 1).every(b => !b.classList.contains('active'));
-            if (allAfterInactive) {
-              data.bead.classList.remove('active');
-              delete activeTouches[touch.identifier];
-            }
-          }
-        }
-      });
-
-      bead.addEventListener('touchend', e => {
-        for (let touch of e.changedTouches) {
-          delete activeTouches[touch.identifier];
-        }
-      });
-
-      let startY = 0;
-
-      bead.addEventListener('touchstart', (e) => {
-        startY = e.touches[0].clientY;
-      });
-
-      bead.addEventListener('touchend', (e) => {
-        const endY = e.changedTouches[0].clientY;
-        const deltaY = endY - startY;
-
-        if (bead.classList.contains('heaven')) {
-          if (deltaY > 20) bead.classList.add('active');
-          else if (deltaY < -20) bead.classList.remove('active');
-        }
-
-        if (bead.classList.contains('earth')) {
-          const allEarth = Array.from(bead.parentElement.children);
-          const index = allEarth.indexOf(bead);
-
-          if (deltaY < -20 && !bead.classList.contains('active')) {
-            const allBeforeActive = allEarth.slice(0, index).every(b => b.classList.contains('active'));
-            if (allBeforeActive) bead.classList.add('active');
-          } else if (deltaY > 20 && bead.classList.contains('active')) {
-            const allAfterInactive = allEarth.slice(index + 1).every(b => !b.classList.contains('active'));
-            if (allAfterInactive) bead.classList.remove('active');
-          }
-        }
-      });
+    bead.addEventListener('touchstart', e => {
+      const touch = e.touches[0];
+      originalY = touch.clientY;
+      bead.style.transition = 'none';
+      activeTouches.set(touch.identifier, { bead, originalY });
     });
-  </script>
+
+    bead.addEventListener('touchmove', e => {
+      const touch = e.touches[0];
+      const data = activeTouches.get(touch.identifier);
+      if (!data) return;
+
+      currentDeltaY = touch.clientY - data.originalY;
+      // Limit movement to vertical direction
+      bead.style.transform = `translateY(${currentDeltaY}px)`;
+    });
+
+    bead.addEventListener('touchend', e => {
+      const touch = e.changedTouches[0];
+      const data = activeTouches.get(touch.identifier);
+      if (!data) return;
+
+      bead.style.transition = 'transform 0.2s';
+      activeTouches.delete(touch.identifier);
+
+      const threshold = 30; // minimum movement to change state
+      const isHeaven = bead.classList.contains('heaven');
+      const isEarth = bead.classList.contains('earth');
+
+      if (isHeaven) {
+        if (currentDeltaY > threshold) {
+          bead.classList.add('active');
+          bead.style.transform = 'translateY(150%)';
+        } else {
+          bead.classList.remove('active');
+          bead.style.transform = 'translateY(0)';
+        }
+      }
+
+      if (isEarth) {
+        const allEarth = Array.from(bead.parentElement.children);
+        const index = allEarth.indexOf(bead);
+
+        if (currentDeltaY < -threshold && !bead.classList.contains('active')) {
+          const allBeforeActive = allEarth.slice(0, index).every(b => b.classList.contains('active'));
+          if (allBeforeActive) {
+            bead.classList.add('active');
+            bead.style.transform = 'translateY(-150%)';
+          } else {
+            bead.style.transform = 'translateY(0)';
+          }
+        } else if (currentDeltaY > threshold && bead.classList.contains('active')) {
+          const allAfterInactive = allEarth.slice(index + 1).every(b => !b.classList.contains('active'));
+          if (allAfterInactive) {
+            bead.classList.remove('active');
+            bead.style.transform = 'translateY(0)';
+          } else {
+            bead.style.transform = 'translateY(-150%)';
+          }
+        } else {
+          // No change
+          bead.style.transform = bead.classList.contains('active') ? 'translateY(-150%)' : 'translateY(0)';
+        }
+      }
+    });
+  });
+</script>
+
 </body>
 </html>
