@@ -218,102 +218,99 @@
   </div>
 
   <script>
-    const activeTouches = {};
+  const activeTouches = {};
 
-    document.querySelectorAll('.bead').forEach(bead => {
-      bead.addEventListener('touchstart', e => {
-        if (e.touches.length > 2) return;
+  document.querySelectorAll('.bead').forEach(bead => {
+    let startY = 0;
+    let moved = false;
 
-        for (let touch of e.changedTouches) {
-          activeTouches[touch.identifier] = {
-            bead: bead,
-            startY: touch.clientY
-          };
-        }
-      });
+    bead.addEventListener('touchstart', (e) => {
+      startY = e.touches[0].clientY;
+      moved = false;
 
-      bead.addEventListener('touchmove', e => {
-        for (let touch of e.changedTouches) {
-          const data = activeTouches[touch.identifier];
-          if (!data) continue;
-
-          const deltaY = touch.clientY - data.startY;
-
-          if (data.bead.classList.contains('heaven') && deltaY < -30 && data.bead.classList.contains('active')) {
-            data.bead.classList.remove('active');
-            delete activeTouches[touch.identifier];
-          } else if (data.bead.classList.contains('earth') && deltaY > 30 && data.bead.classList.contains('active')) {
-            const allEarth = Array.from(data.bead.parentElement.children);
-            const index = allEarth.indexOf(data.bead);
-            const allAfterInactive = allEarth.slice(index + 1).every(b => !b.classList.contains('active'));
-            if (allAfterInactive) {
-              data.bead.classList.remove('active');
-              delete activeTouches[touch.identifier];
-            }
-          }
-        }
-      });
-
-      bead.addEventListener('touchend', e => {
-        for (let touch of e.changedTouches) {
-          delete activeTouches[touch.identifier];
-        }
-      });
-        let startY = 0;
-
-bead.addEventListener('touchstart', (e) => {
-  startY = e.touches[0].clientY;
-});
-
-bead.addEventListener('touchend', (e) => {
-  const endY = e.changedTouches[0].clientY;
-  const deltaY = endY - startY;
-
-  // For heaven beads: slide down means activate, slide up means deactivate
-  if (bead.classList.contains('heaven')) {
-    if (deltaY > 20) bead.classList.add('active');
-    else if (deltaY < -20) bead.classList.remove('active');
-  }
-
-  // For earth beads: slide up means activate, slide down means deactivate
-  if (bead.classList.contains('earth')) {
-    const allEarth = Array.from(bead.parentElement.children);
-    const index = allEarth.indexOf(bead);
-
-    if (deltaY < -20 && !bead.classList.contains('active')) {
-      const allBeforeActive = allEarth.slice(0, index).every(b => b.classList.contains('active'));
-      if (allBeforeActive) bead.classList.add('active');
-    } else if (deltaY > 20 && bead.classList.contains('active')) {
-      const allAfterInactive = allEarth.slice(index + 1).every(b => !b.classList.contains('active'));
-      if (allAfterInactive) bead.classList.remove('active');
-    }
-  }
-});
-
+      for (let touch of e.changedTouches) {
+        activeTouches[touch.identifier] = {
+          bead: bead,
+          startY: touch.clientY
+        };
+      }
     });
 
-    function toggleBead(bead) {
-      if (!bead.classList.contains('earth')) {
-        bead.classList.toggle('active');
-        return;
+    bead.addEventListener('touchmove', (e) => {
+      const touch = e.changedTouches[0];
+      const data = activeTouches[touch.identifier];
+      if (!data) return;
+
+      const deltaY = touch.clientY - data.startY;
+
+      if (Math.abs(deltaY) < 10) return; // prevent small accidental swipes
+
+      moved = true;
+
+      const currentBead = data.bead;
+      const isHeaven = currentBead.classList.contains('heaven');
+      const isEarth = currentBead.classList.contains('earth');
+
+      if (isHeaven) {
+        if (deltaY > 20) currentBead.classList.add('active');
+        else if (deltaY < -20) currentBead.classList.remove('active');
       }
 
+      if (isEarth) {
+        const allEarth = Array.from(currentBead.parentElement.children);
+        const index = allEarth.indexOf(currentBead);
+
+        if (deltaY < -20) {
+          // Swipe up to activate this and beads below
+          for (let i = index; i >= 0; i--) {
+            allEarth[i].classList.add('active');
+          }
+        } else if (deltaY > 20) {
+          // Swipe down to deactivate this and beads above
+          for (let i = index; i < allEarth.length; i++) {
+            allEarth[i].classList.remove('active');
+          }
+        }
+      }
+    });
+
+    bead.addEventListener('touchend', (e) => {
+      for (let touch of e.changedTouches) {
+        delete activeTouches[touch.identifier];
+      }
+      if (!moved) {
+        // Tap fallback (for desktop or quick tap)
+        toggleBead(bead);
+      }
+    });
+  });
+
+  function toggleBead(bead) {
+    const isHeaven = bead.classList.contains('heaven');
+    const isEarth = bead.classList.contains('earth');
+
+    if (isHeaven) {
+      bead.classList.toggle('active');
+    }
+
+    if (isEarth) {
       const allEarth = Array.from(bead.parentElement.children);
       const index = allEarth.indexOf(bead);
       const isActive = bead.classList.contains('active');
 
       if (!isActive) {
-        const allBeforeActive = allEarth.slice(0, index).every(b => b.classList.contains('active'));
-        if (allBeforeActive) {
-          bead.classList.add('active');
+        for (let i = index; i >= 0; i--) {
+          allEarth[i].classList.add('active');
         }
       } else {
-        const allAfterInactive = allEarth.slice(index + 1).every(b => !b.classList.contains('active'));
-        if (allAfterInactive) {
-          bead.classList.remove('active');
+        for (let i = index; i < allEarth.length; i++) {
+          allEarth[i].classList.remove('active');
         }
       }
     }
-  </script>
+  }
+</script>
+
 </body>
 </html>
+ 
