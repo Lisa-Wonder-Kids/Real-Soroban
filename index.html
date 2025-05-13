@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -96,7 +95,8 @@
       background: black;
       z-index: 2;
     }
-.bead {
+
+    .bead {
       width: 50px;
       height: 30px;
       background: radial-gradient(circle at 30% 30%, #444, #111);
@@ -160,8 +160,8 @@
         content: "Please rotate your device";
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
-        background: #ADD8E6;
-        color: gray;
+        background: black;
+        color: white;
         font-size: 2rem;
         display: flex;
         justify-content: center;
@@ -216,35 +216,40 @@
       <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
     </div>
   </div>
- 
-<script>
-const activeTouches = {};
 
-document.querySelectorAll('.bead').forEach(bead => {
-  bead.addEventListener('touchstart', (e) => {
-    for (let touch of e.changedTouches) {
-      activeTouches[touch.identifier] = {
-        bead,
-        startY: touch.clientY,
-        moved: false
-      };
-    }
-  });
+  <script>
+  const activeTouches = {};
 
-  bead.addEventListener('touchmove', (e) => {
-    for (let touch of e.changedTouches) {
+  document.querySelectorAll('.bead').forEach(bead => {
+    let startY = 0;
+    let moved = false;
+
+    bead.addEventListener('touchstart', (e) => {
+      startY = e.touches[0].clientY;
+      moved = false;
+
+      for (let touch of e.changedTouches) {
+        activeTouches[touch.identifier] = {
+          bead: bead,
+          startY: touch.clientY
+        };
+      }
+    });
+
+    bead.addEventListener('touchmove', (e) => {
+      const touch = e.changedTouches[0];
       const data = activeTouches[touch.identifier];
-      if (!data) continue;
+      if (!data) return;
 
       const deltaY = touch.clientY - data.startY;
-      if (Math.abs(deltaY) < 10) continue; // prevent small accidental swipes
 
-      data.moved = true;
+      if (Math.abs(deltaY) < 10) return; // prevent small accidental swipes
+
+      moved = true;
+
       const currentBead = data.bead;
       const isHeaven = currentBead.classList.contains('heaven');
       const isEarth = currentBead.classList.contains('earth');
-      const allEarthBeads = Array.from(currentBead.parentElement.children);
-      const index = allEarthBeads.indexOf(currentBead);
 
       if (isHeaven) {
         if (deltaY > 20) currentBead.classList.add('active');
@@ -252,62 +257,58 @@ document.querySelectorAll('.bead').forEach(bead => {
       }
 
       if (isEarth) {
-        const totalHeight = 40;  // height of each bead
-        const spacing = 10;      // space between beads
-        const totalBeadHeight = totalHeight + spacing;
+        const allEarth = Array.from(currentBead.parentElement.children);
+        const index = allEarth.indexOf(currentBead);
 
         if (deltaY < -20) {
-          // Move beads up as a block
-          for (let i = index; i < allEarthBeads.length; i++) {
-            allEarthBeads[i].classList.add('active');
-            allEarthBeads[i].style.transform = `translateY(-${(i - index) * totalBeadHeight}px)`;
+          // Swipe up to activate this and beads below
+          for (let i = index; i >= 0; i--) {
+            allEarth[i].classList.add('active');
           }
         } else if (deltaY > 20) {
-          // Move beads down as a block
-          for (let i = index; i < allEarthBeads.length; i++) {
-            allEarthBeads[i].classList.remove('active');
-            allEarthBeads[i].style.transform = `translateY(0px)`;
+          // Swipe down to deactivate this and beads above
+          for (let i = index; i < allEarth.length; i++) {
+            allEarth[i].classList.remove('active');
           }
         }
       }
-    }
+    });
+
+    bead.addEventListener('touchend', (e) => {
+      for (let touch of e.changedTouches) {
+        delete activeTouches[touch.identifier];
+      }
+      if (!moved) {
+        // Tap fallback (for desktop or quick tap)
+        toggleBead(bead);
+      }
+    });
   });
 
-  bead.addEventListener('touchend', (e) => {
-    for (let touch of e.changedTouches) {
-      const data = activeTouches[touch.identifier];
-      if (data && !data.moved) {
-        toggleBead(data.bead); // fallback tap
-      }
-      delete activeTouches[touch.identifier];
+  function toggleBead(bead) {
+    const isHeaven = bead.classList.contains('heaven');
+    const isEarth = bead.classList.contains('earth');
+
+    if (isHeaven) {
+      bead.classList.toggle('active');
     }
-  });
-});
 
-function toggleBead(bead) {
-  const isHeaven = bead.classList.contains('heaven');
-  const isEarth = bead.classList.contains('earth');
+    if (isEarth) {
+      const allEarth = Array.from(bead.parentElement.children);
+      const index = allEarth.indexOf(bead);
+      const isActive = bead.classList.contains('active');
 
-  if (isHeaven) {
-    bead.classList.toggle('active');
-  }
-
-  if (isEarth) {
-    const allEarth = Array.from(bead.parentElement.children);
-    const index = allEarth.indexOf(bead);
-    const isActive = bead.classList.contains('active');
-
-    if (!isActive) {
-      for (let i = index; i >= 0; i--) {
-        allEarth[i].classList.add('active');
-      }
-    } else {
-      for (let i = index; i < allEarth.length; i++) {
-        allEarth[i].classList.remove('active');
+      if (!isActive) {
+        for (let i = index; i >= 0; i--) {
+          allEarth[i].classList.add('active');
+        }
+      } else {
+        for (let i = index; i < allEarth.length; i++) {
+          allEarth[i].classList.remove('active');
+        }
       }
     }
   }
-}
 </script>
 
 </body>
