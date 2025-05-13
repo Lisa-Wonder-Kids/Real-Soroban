@@ -1,379 +1,316 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Soroban</title>
-    <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            width: 100vw;
-            height: 100dvh;
-            background: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            touch-action: none;
-            -webkit-user-select: none;
-            user-select: none;
-            overscroll-behavior: none;
-            -webkit-tap-highlight-color: transparent;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Soroban</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      width: 100vw;
+      height: 100dvh;
+      background: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+      overscroll-behavior: none;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-        #container {
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
+    #container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
 
-        .soroban {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            background: #8B4513;
-            padding: 10px;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.3);
-            overflow: hidden;
-        }
+    .soroban {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #8B4513;
+      padding: 10px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
 
-        .rod {
-            position: relative;
-            width: 60px;
-            height: 250px;
-            background: #D2B48C;
-            border-radius: 5px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
-        }
+    .rod {
+      position: relative;
+      width: 60px;
+      height: 250px;
+      background: #D2B48C;
+      border-radius: 5px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+    }
 
-        .rod-line {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 4px;
-            background: black;
-            z-index: 0;
-        }
+    .rod-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: black;
+      z-index: 0;
+    }
 
-        .heaven {
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            align-items: center;
-            height: 12%;
-            gap: 5px;
-            z-index: 1;
-        }
+    .heaven {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: center;
+      height: 12%;
+      gap: 5px;
+      z-index: 1;
+    }
 
-        .gap-space {
-            height: 8%;
-            z-index: 1;
-        }
+    .gap-space {
+      height: 8%;
+      z-index: 1;
+    }
 
-        .earth {
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
-            align-items: center;
-            height: 52%;
-            margin-top: 5px;
-            z-index: 1;
-        }
+    .earth {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
+      height: 52%;
+      margin-top: 5px;
+      z-index: 1;
+    }
 
-        .bar {
-            position: absolute;
-            top: 30%;
-            width: 100%;
-            height: 8px;
-            background: black;
-            z-index: 2;
-        }
+    .bar {
+      position: absolute;
+      top: 30%;
+      width: 100%;
+      height: 8px;
+      background: black;
+      z-index: 2;
+    }
 
-        .bead {
-            width: 50px;
-            height: 30px;
-            background: radial-gradient(circle at 30% 30%, #444, #111);
-            border-radius: 50% / 40%;
-            box-shadow: inset -2px -2px 5px rgba(255, 255, 255, 0.2),
-                        inset 2px 2px 5px rgba(0, 0, 0, 0.4);
-            transition: transform 0.2s, background-color 0.2s;
-            z-index: 3;
-            touch-action: none;
-        }
+    .bead {
+      width: 50px;
+      height: 30px;
+      background: radial-gradient(circle at 30% 30%, #444, #111);
+      border-radius: 50% / 40%;
+      box-shadow: inset -2px -2px 5px rgba(255, 255, 255, 0.2),
+                  inset 2px 2px 5px rgba(0, 0, 0, 0.4);
+      transition: transform 0.2s, background-color 0.2s;
+      z-index: 3;
+      touch-action: none;
+    }
 
-        .bead.active {
-            background: radial-gradient(circle at 30% 30%, #FFD700, #FFA500);
-            box-shadow: inset -2px -2px 5px rgba(255, 255, 255, 0.4),
-                        inset 2px 2px 5px rgba(0, 0, 0, 0.3);
-        }
+    .bead.active {
+      background: radial-gradient(circle at 30% 30%, #FFD700, #FFA500);
+      box-shadow: inset -2px -2px 5px rgba(255, 255, 255, 0.4),
+                  inset 2px 2px 5px rgba(0, 0, 0, 0.3);
+    }
 
-        .bead.heaven.active {
-            transform: translateY(150%);
-        }
+    .bead.heaven.active {
+      transform: translateY(150%);
+    }
 
-        .bead.earth.active {
-            transform: translateY(-150%);
-        }
+    .bead.earth.active {
+      transform: translateY(-150%);
+    }
 
-        @media (max-width: 768px) {
-            .soroban {
-                flex-wrap: wrap;
-                gap: 5px;
-            }
+    @media (max-width: 768px) {
+      .soroban {
+        flex-wrap: wrap;
+        gap: 5px;
+      }
 
-            .rod {
-                width: 60px;
-                height: 220px;
-            }
+      .rod {
+        width: 60px;
+        height: 220px;
+      }
 
-            .bead {
-                width: 40px;
-                height: 25px;
-            }
-        }
+      .bead {
+        width: 40px;
+        height: 25px;
+      }
+    }
 
-        @media (max-width: 480px) {
-            .soroban {
-                gap: 3px;
-            }
+    @media (max-width: 480px) {
+      .soroban {
+        gap: 3px;
+      }
 
-            .rod {
-                width: 50px;
-                height: 200px;
-            }
+      .rod {
+        width: 50px;
+        height: 200px;
+      }
 
-            .bead {
-                width: 35px;
-                height: 22px;
-            }
-        }
+      .bead {
+        width: 35px;
+        height: 22px;
+      }
+    }
 
-        @media screen and (orientation: portrait) {
-            body::before {
-                content: "Please rotate your device";
-                position: fixed;
-                top: 0; left: 0; right: 0; bottom: 0;
-                background: black;
-                color: white;
-                font-size: 2rem;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                z-index: 9999;
-                text-align: center;
-                padding: 1em;
-            }
-            #container {
-                display: none;
-            }
-        }
-    </style>
+    @media screen and (orientation: portrait) {
+      body::before {
+        content: "Please rotate your device";
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: black;
+        color: white;
+        font-size: 2rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        text-align: center;
+        padding: 1em;
+      }
+      #container {
+        display: none;
+      }
+    }
+  </style>
 </head>
 <body>
-    <div id="container">
-        <div class="soroban">
-            <div class="rod">
-            <div class="rod-line">
-            </div>
-            <div class="heaven">
-            <div class="bead heaven">
-            </div>
-            </div>
-            <div class="gap-space">
-            </div>
-            <div class="earth">
-            <div class="bead earth">
-            </div>
-            <div class="bead earth">
-            </div>
-            <div class="bead earth">
-            </div>
-            <div class="bead earth">
-            </div>
-            </div>
-            <div class="bar">
-            </div>
-            </div>
+  <div id="container">
+    <div class="soroban">
+      <!-- 7 rods -->
+      <div class="rod">
+      <div class="rod-line">
+   </div>
+      <div class="heaven">
+      <div class="bead heaven">
+   </div>
+   </div>
+      <div class="gap-space">
+   </div>
+      <div class="earth">
+      <div class="bead earth">
+   </div>
+      <div class="bead earth">
+   </div>
+      <div class="bead earth">
+   </div>
+      <div class="bead earth">
+   </div>
+   </div>
+      <div class="bar">
+   </div>
+   </div>
 
-            <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
+      <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
 
-            <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
+      <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
 
-            <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
+      <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
 
-            <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
+      <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
 
-            <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
+      <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
 
-            <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
-        </div>
+      <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
     </div>
+  </div>
 
-    <script>
-    const activeTouches = {};
+  <script>
+  const activeTouches = {};
 
-    document.querySelectorAll('.bead').forEach(bead => {
-        let moved = false;
+  document.querySelectorAll('.bead').forEach(bead => {
+    let startY = 0;
+    let moved = false;
 
-        bead.addEventListener('touchstart', (e) => {
-            moved = false;
-            for (let touch of e.changedTouches) {
-                activeTouches[touch.identifier] = {
-                    bead: bead,
-                    startY: touch.clientY,
-                    initialY: bead.getBoundingClientRect().top, // Store initial position
-                    rodTop: bead.parentElement.getBoundingClientRect().top
-                };
-                bead.style.transition = 'none'; // Disable transition during movement
-            }
-        });
+    bead.addEventListener('touchstart', (e) => {
+      startY = e.touches[0].clientY;
+      moved = false;
 
-        bead.addEventListener('touchmove', (e) => {
-            const touch = e.changedTouches[0];
-            const data = activeTouches[touch.identifier];
-            if (!data) return;
-
-            moved = true;
-            const deltaY = touch.clientY - data.startY;
-            const currentBead = data.bead;
-            const isHeaven = currentBead.classList.contains('heaven');
-            const isEarth = currentBead.classList.contains('earth');
-            const rodHeight = currentBead.parentElement.offsetHeight;
-            const beadHeight = currentBead.offsetHeight;
-            const barTop = currentBead.parentElement.querySelector('.bar').getBoundingClientRect().top - data.rodTop;
-
-
-            if (isHeaven) {
-                let newY = data.initialY + deltaY - data.rodTop;
-                // Constrain movement
-                newY = Math.max(0, Math.min(newY, barTop - beadHeight * 0.5));
-                currentBead.style.transform = `translateY(${newY}px)`;
-                currentBead.classList.toggle('active', newY > (barTop - beadHeight * 0.75));
-            }
-
-            if (isEarth) {
-                const allEarth = Array.from(currentBead.parentElement.children).filter(child => child.classList.contains('earth'));
-                const index = allEarth.indexOf(currentBead);
-                const earthTop = currentBead.parentElement.querySelector('.earth').getBoundingClientRect().top - data.rodTop;
-                const earthBottom = currentBead.parentElement.querySelector('.earth').getBoundingClientRect().bottom - data.rodTop;
-
-                let newY = data.initialY + deltaY - data.rodTop;
-                // Constrain movement.  Important.
-                newY = Math.max(barTop + beadHeight * 0.5, Math.min(newY, earthBottom));
-                const relativeY = newY - earthTop - index * beadHeight;
-                currentBead.style.transform = `translateY(${relativeY}px)`;
-
-                // Update active state based on proximity to the bar
-                const centerOfBead = newY + beadHeight / 2;
-                const barCenter = barTop + 4; // Approximate center of the bar
-
-                if (centerOfBead < barCenter) {
-                    currentBead.classList.add('active');
-                } else {
-                    currentBead.classList.remove('active');
-                }
-
-                // Update the active state of other earth beads based on this one
-                if (currentBead.classList.contains('active')) {
-                    for (let i = index - 1; i >= 0; i--) {
-                        allEarth[i].classList.add('active');
-                    }
-                } else {
-                    for (let i = index + 1; i < allEarth.length; i++) {
-                        allEarth[i].classList.remove('active');
-                    }
-                }
-            }
-        });
-
-        bead.addEventListener('touchend', (e) => {
-            for (let touch of e.changedTouches) {
-                delete activeTouches[touch.identifier];
-            }
-            // Re-enable transition for a smoother settling
-            bead.style.transition = 'transform 0.2s';
-
-            const currentBead = e.target;
-            const isHeaven = currentBead.classList.contains('heaven');
-            const isEarth = currentBead.classList.contains('earth');
-            const rodHeight = currentBead.parentElement.offsetHeight;
-            const beadHeight = currentBead.offsetHeight;
-            const barTop = currentBead.parentElement.querySelector('.bar').getBoundingClientRect().top - currentBead.parentElement.getBoundingClientRect().top;
-
-             if (isHeaven) {
-                const currentY = currentBead.getBoundingClientRect().top - currentBead.parentElement.getBoundingClientRect().top;
-                const snapTop = 0;
-                const snapBottom = barTop - beadHeight/2;
-
-                if (Math.abs(currentY - snapTop) < Math.abs(currentY - snapBottom))
-                {
-                    currentBead.style.transform = `translateY(${snapTop}px)`;
-                    currentBead.classList.remove('active');
-                }
-                else
-                {
-                   currentBead.style.transform = `translateY(${snapBottom}px)`;
-                   currentBead.classList.add('active');
-                }
-             }
-
-             if (isEarth)
-             {
-                const allEarth = Array.from(currentBead.parentElement.children).filter(child => child.classList.contains('earth'));
-                const index = allEarth.indexOf(currentBead);
-                const earthTop = currentBead.parentElement.querySelector('.earth').getBoundingClientRect().top - currentBead.parentElement.getBoundingClientRect().top;
-                const earthBottom = currentBead.parentElement.querySelector('.earth').getBoundingClientRect().bottom - currentBead.parentElement.getBoundingClientRect().top;
-                const snapPositions = [];
-                for(let i=0; i< allEarth.length; ++i)
-                {
-                    snapPositions.push(barTop + beadHeight/2 + i * beadHeight);
-                }
-                let closestSnap = snapPositions[0];
-                let closestDistance = Math.abs(currentBead.getBoundingClientRect().top + beadHeight/2 - (currentBead.parentElement.getBoundingClientRect().top + snapPositions[0]));
-                for(let i=1; i<snapPositions.length; ++i)
-                {
-                    const distance = Math.abs(currentBead.getBoundingClientRect().top + beadHeight/2 - (currentBead.parentElement.getBoundingClientRect().top + snapPositions[i]));
-                    if (distance < closestDistance)
-                    {
-                        closestDistance = distance;
-                        closestSnap = snapPositions[i];
-                    }
-                }
-                const newY = closestSnap - earthTop - index * beadHeight;
-                currentBead.style.transform = `translateY(${newY}px)`;
-                if (closestSnap <= barTop + beadHeight)
-                    currentBead.classList.add('active');
-                else
-                    currentBead.classList.remove('active');
-
-                // Update the active state of other earth beads based on this one
-                if (currentBead.classList.contains('active')) {
-                    for (let i = index - 1; i >= 0; i--) {
-                        allEarth[i].classList.add('active');
-                    }
-                } else {
-                    for (let i = index + 1; i < allEarth.length; i++) {
-                        allEarth[i].classList.remove('active');
-                    }
-                }
-             }
-        });
-
-        bead.addEventListener('touchcancel', (e) => {
-            for (let touch of e.changedTouches) {
-                delete activeTouches[touch.identifier];
-            }
-            bead.style.transition = 'transform 0.2s';
-            // Optionally, reset the bead's position if the touch was interrupted
-        });
+      for (let touch of e.changedTouches) {
+        activeTouches[touch.identifier] = {
+          bead: bead,
+          startY: touch.clientY
+        };
+      }
     });
-    </script>
+
+    bead.addEventListener('touchmove', (e) => {
+      const touch = e.changedTouches[0];
+      const data = activeTouches[touch.identifier];
+      if (!data) return;
+
+      const deltaY = touch.clientY - data.startY;
+
+      if (Math.abs(deltaY) < 10) return; // prevent small accidental swipes
+
+      moved = true;
+
+      const currentBead = data.bead;
+      const isHeaven = currentBead.classList.contains('heaven');
+      const isEarth = currentBead.classList.contains('earth');
+
+      if (isHeaven) {
+        if (deltaY > 20) currentBead.classList.add('active');
+        else if (deltaY < -20) currentBead.classList.remove('active');
+      }
+
+      if (isEarth) {
+        const allEarth = Array.from(currentBead.parentElement.children);
+        const index = allEarth.indexOf(currentBead);
+
+        if (deltaY < -20) {
+          // Swipe up to activate this and beads below
+          for (let i = index; i >= 0; i--) {
+            allEarth[i].classList.add('active');
+          }
+        } else if (deltaY > 20) {
+          // Swipe down to deactivate this and beads above
+          for (let i = index; i < allEarth.length; i++) {
+            allEarth[i].classList.remove('active');
+          }
+        }
+      }
+    });
+
+    bead.addEventListener('touchend', (e) => {
+      for (let touch of e.changedTouches) {
+        delete activeTouches[touch.identifier];
+      }
+      if (!moved) {
+        // Tap fallback (for desktop or quick tap)
+        toggleBead(bead);
+      }
+    });
+  });
+
+  function toggleBead(bead) {
+    const isHeaven = bead.classList.contains('heaven');
+    const isEarth = bead.classList.contains('earth');
+
+    if (isHeaven) {
+      bead.classList.toggle('active');
+    }
+
+    if (isEarth) {
+      const allEarth = Array.from(bead.parentElement.children);
+      const index = allEarth.indexOf(bead);
+      const isActive = bead.classList.contains('active');
+
+      if (!isActive) {
+        for (let i = index; i >= 0; i--) {
+          allEarth[i].classList.add('active');
+        }
+      } else {
+        for (let i = index; i < allEarth.length; i++) {
+          allEarth[i].classList.remove('active');
+        }
+      }
+    }
+  }
+</script>
+
 </body>
 </html>
+ 
