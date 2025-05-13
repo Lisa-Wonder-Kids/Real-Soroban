@@ -217,98 +217,90 @@
     </div>
   </div>
 
-  <script>
-  const activeTouches = {};
+<script>
+const activeTouches = {};
 
-  document.querySelectorAll('.bead').forEach(bead => {
-    let startY = 0;
-    let moved = false;
+document.querySelectorAll('.bead').forEach(bead => {
+  let startY = 0;
+  let moved = false;
 
-    bead.addEventListener('touchstart', (e) => {
-      startY = e.touches[0].clientY;
-      moved = false;
+  bead.addEventListener('touchstart', (e) => {
+    for (let touch of e.changedTouches) {
+      activeTouches[touch.identifier] = {
+        bead: bead,
+        startY: touch.clientY
+      };
+    }
+  });
 
-      for (let touch of e.changedTouches) {
-        activeTouches[touch.identifier] = {
-          bead: bead,
-          startY: touch.clientY
-        };
-      }
-    });
-
-    bead.addEventListener('touchmove', (e) => {
-      const touch = e.changedTouches[0];
+  bead.addEventListener('touchmove', (e) => {
+    for (let touch of e.changedTouches) {
       const data = activeTouches[touch.identifier];
-      if (!data) return;
+      if (!data) continue;
 
       const deltaY = touch.clientY - data.startY;
-
-      if (Math.abs(deltaY) < 10) return; // prevent small accidental swipes
-
-      moved = true;
-
       const currentBead = data.bead;
       const isHeaven = currentBead.classList.contains('heaven');
       const isEarth = currentBead.classList.contains('earth');
 
-      if (isHeaven) {
-        if (deltaY > 20) currentBead.classList.add('active');
-        else if (deltaY < -20) currentBead.classList.remove('active');
+      if (isHeaven && deltaY > 20) {
+        currentBead.classList.add('active');
+      } else if (isHeaven && deltaY < -20) {
+        currentBead.classList.remove('active');
       }
 
       if (isEarth) {
-        const allEarth = Array.from(currentBead.parentElement.children);
-        const index = allEarth.indexOf(currentBead);
+        const earthBeads = Array.from(currentBead.parentElement.children);
+        const index = earthBeads.indexOf(currentBead);
 
         if (deltaY < -20) {
-          // Swipe up to activate this and beads below
           for (let i = index; i >= 0; i--) {
-            allEarth[i].classList.add('active');
+            earthBeads[i].classList.add('active');
           }
         } else if (deltaY > 20) {
-          // Swipe down to deactivate this and beads above
-          for (let i = index; i < allEarth.length; i++) {
-            allEarth[i].classList.remove('active');
+          for (let i = index; i < earthBeads.length; i++) {
+            earthBeads[i].classList.remove('active');
           }
         }
       }
-    });
-
-    bead.addEventListener('touchend', (e) => {
-      for (let touch of e.changedTouches) {
-        delete activeTouches[touch.identifier];
-      }
-      if (!moved) {
-        // Tap fallback (for desktop or quick tap)
-        toggleBead(bead);
-      }
-    });
+    }
   });
 
-  function toggleBead(bead) {
-    const isHeaven = bead.classList.contains('heaven');
-    const isEarth = bead.classList.contains('earth');
-
-    if (isHeaven) {
-      bead.classList.toggle('active');
+  bead.addEventListener('touchend', (e) => {
+    for (let touch of e.changedTouches) {
+      const data = activeTouches[touch.identifier];
+      if (data && !moved) {
+        toggleBead(data.bead);
+      }
+      delete activeTouches[touch.identifier];
     }
+  });
+});
 
-    if (isEarth) {
-      const allEarth = Array.from(bead.parentElement.children);
-      const index = allEarth.indexOf(bead);
-      const isActive = bead.classList.contains('active');
+function toggleBead(bead) {
+  const isHeaven = bead.classList.contains('heaven');
+  const isEarth = bead.classList.contains('earth');
 
-      if (!isActive) {
-        for (let i = index; i >= 0; i--) {
-          allEarth[i].classList.add('active');
-        }
-      } else {
-        for (let i = index; i < allEarth.length; i++) {
-          allEarth[i].classList.remove('active');
-        }
+  if (isHeaven) {
+    bead.classList.toggle('active');
+  }
+
+  if (isEarth) {
+    const allEarth = Array.from(bead.parentElement.children);
+    const index = allEarth.indexOf(bead);
+    const isActive = bead.classList.contains('active');
+
+    if (!isActive) {
+      for (let i = index; i >= 0; i--) {
+        allEarth[i].classList.add('active');
+      }
+    } else {
+      for (let i = index; i < allEarth.length; i++) {
+        allEarth[i].classList.remove('active');
       }
     }
   }
+}
 </script>
 
 </body>
