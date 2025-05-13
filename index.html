@@ -121,6 +121,10 @@
     .bead.earth.active {
       transform: translateY(-150%);
     }
+     
+    .heaven, .earth {
+     position: relative; /* Add this line */
+    }
 
     @media (max-width: 768px) {
       .soroban {
@@ -234,14 +238,18 @@
       startY = touch.clientY;
       startTop = parseFloat(bead.style.top || 0);
 
-      // Set movement limits (in px)
       if (isHeaven) {
-        maxMove = 50;   // how far down heaven bead can go
-        minMove = 0;    // heaven bead starts at top
-      } else if (isEarth) {
-        maxMove = 0;    // earth bead starts at bottom
-        minMove = -80;  // how far up earth bead can go
-      }
+  const containerHeight = bead.parentElement.offsetHeight;
+  const beadHeight = bead.offsetHeight;
+  maxMove = containerHeight - beadHeight;
+  minMove = 0;
+} else if (isEarth) {
+  const containerHeight = bead.parentElement.offsetHeight;
+  const beadHeight = bead.offsetHeight;
+  maxMove = 0;
+  minMove = -(containerHeight - beadHeight);
+}
+  
 
       bead.style.transition = 'none';
     });
