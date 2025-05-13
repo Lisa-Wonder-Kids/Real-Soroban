@@ -161,34 +161,45 @@
   </div>
 
   <script>
-    document.querySelectorAll('.rod').forEach(rod => {
-      const heavenBeads = rod.querySelectorAll('.heaven .bead');
-      const earthBeads = rod.querySelectorAll('.earth .bead');
+  document.querySelectorAll('.bead').forEach(bead => {
+    let startY = 0;
 
-      [...heavenBeads, ...earthBeads].forEach((bead, i, beads) => {
-        let startY = 0, offsetY = 0;
-
-        bead.style.top = `${i * 35}px`;
-
-        bead.addEventListener('touchstart', e => {
-          startY = e.touches[0].clientY;
-          offsetY = parseFloat(bead.style.top);
-        });
-
-        bead.addEventListener('touchmove', e => {
-          const moveY = e.touches[0].clientY - startY;
-          let newY = offsetY + moveY;
-
-          // Clamp movement
-          const min = i === 0 ? 0 : parseFloat(beads[i - 1].style.top) + 35;
-          const max = i === beads.length - 1 ? 999 : parseFloat(beads[i + 1].style.top) - 35;
-
-          newY = Math.max(min, Math.min(max, newY));
-
-          bead.style.top = `${newY}px`;
-        });
-      });
+    bead.addEventListener('touchstart', (e) => {
+      if (e.touches.length > 2) return;
+      startY = e.touches[0].clientY;
     });
-  </script>
+
+    bead.addEventListener('touchend', (e) => {
+      const endY = e.changedTouches[0].clientY;
+      const deltaY = endY - startY;
+
+      if (bead.classList.contains('heaven')) {
+        if (deltaY > 20) {
+          bead.classList.add('active');
+        } else if (deltaY < -20) {
+          bead.classList.remove('active');
+        }
+      }
+
+      if (bead.classList.contains('earth')) {
+        const allEarth = Array.from(bead.parentElement.children);
+        const index = allEarth.indexOf(bead);
+        const isActive = bead.classList.contains('active');
+
+        if (!isActive && deltaY < -20) {
+          const allBeforeActive = allEarth.slice(0, index).every(b => b.classList.contains('active'));
+          if (allBeforeActive) {
+            bead.classList.add('active');
+          }
+        } else if (isActive && deltaY > 20) {
+          const allAfterInactive = allEarth.slice(index + 1).every(b => !b.classList.contains('active'));
+          if (allAfterInactive) {
+            bead.classList.remove('active');
+          }
+        }
+      }
+    });
+  });
+</script>
 </body>
 </html>
