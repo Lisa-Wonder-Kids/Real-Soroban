@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -95,8 +96,7 @@
       background: black;
       z-index: 2;
     }
-
-    .bead {
+.bead {
       width: 50px;
       height: 30px;
       background: radial-gradient(circle at 30% 30%, #444, #111);
@@ -160,8 +160,8 @@
         content: "Please rotate your device";
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
-        background: black;
-        color: white;
+        background: #ADD8E6;
+        color: gray;
         font-size: 2rem;
         display: flex;
         justify-content: center;
@@ -216,6 +216,7 @@
       <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
     </div>
   </div>
+ 
 <script>
 const activeTouches = {};
 
@@ -242,6 +243,8 @@ document.querySelectorAll('.bead').forEach(bead => {
       const currentBead = data.bead;
       const isHeaven = currentBead.classList.contains('heaven');
       const isEarth = currentBead.classList.contains('earth');
+      const allEarthBeads = Array.from(currentBead.parentElement.children);
+      const index = allEarthBeads.indexOf(currentBead);
 
       if (isHeaven) {
         if (deltaY > 20) currentBead.classList.add('active');
@@ -249,16 +252,21 @@ document.querySelectorAll('.bead').forEach(bead => {
       }
 
       if (isEarth) {
-        const allEarth = Array.from(currentBead.parentElement.children);
-        const index = allEarth.indexOf(currentBead);
+        const totalHeight = 40;  // height of each bead
+        const spacing = 10;      // space between beads
+        const totalBeadHeight = totalHeight + spacing;
 
         if (deltaY < -20) {
-          for (let i = index; i >= 0; i--) {
-            allEarth[i].classList.add('active');
+          // Move beads up as a block
+          for (let i = index; i < allEarthBeads.length; i++) {
+            allEarthBeads[i].classList.add('active');
+            allEarthBeads[i].style.transform = `translateY(-${(i - index) * totalBeadHeight}px)`;
           }
         } else if (deltaY > 20) {
-          for (let i = index; i < allEarth.length; i--) {
-            allEarth[i].classList.remove('active');
+          // Move beads down as a block
+          for (let i = index; i < allEarthBeads.length; i++) {
+            allEarthBeads[i].classList.remove('active');
+            allEarthBeads[i].style.transform = `translateY(0px)`;
           }
         }
       }
@@ -301,7 +309,6 @@ function toggleBead(bead) {
   }
 }
 </script>
-
 
 </body>
 </html>
