@@ -11,7 +11,7 @@
       overflow: hidden;
       width: 100vw;
       height: 100dvh;
-      background: gray;
+      background: white;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -32,8 +32,6 @@
 
     .soroban {
       display: flex;
-      flex-wrap: wrap;
-      gap: 5px;
       justify-content: center;
       align-items: center;
       background: #8B4513;
@@ -125,6 +123,11 @@
     }
 
     @media (max-width: 768px) {
+      .soroban {
+        flex-wrap: wrap;
+        gap: 5px;
+      }
+
       .rod {
         width: 60px;
         height: 220px;
@@ -137,6 +140,10 @@
     }
 
     @media (max-width: 480px) {
+      .soroban {
+        gap: 3px;
+      }
+
       .rod {
         width: 50px;
         height: 200px;
@@ -150,17 +157,21 @@
 
     @media screen and (orientation: portrait) {
       body::before {
-        content: "Rotate to landscape for better view";
+        content: "Please rotate your device";
         position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        background: rgba(0, 0, 0, 0.8);
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: black;
         color: white;
-        font-size: 1rem;
-        padding: 0.5em;
-        text-align: center;
+        font-size: 2rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
         z-index: 9999;
+        text-align: center;
+        padding: 1em;
+      }
+      #container {
+        display: none;
       }
     }
   </style>
@@ -169,85 +180,117 @@
   <div id="container">
     <div class="soroban">
       <!-- 7 rods -->
+      <div class="rod">
+      <div class="rod-line">
+   </div>
+      <div class="heaven">
+      <div class="bead heaven">
+   </div>
+   </div>
+      <div class="gap-space">
+   </div>
+      <div class="earth">
+      <div class="bead earth">
+   </div>
+      <div class="bead earth">
+   </div>
+      <div class="bead earth">
+   </div>
+      <div class="bead earth">
+   </div>
+   </div>
+      <div class="bar">
+   </div>
+   </div>
+
       <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
+
       <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
+
       <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
+
       <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
+
       <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
-      <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
+
       <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
     </div>
   </div>
-
-  <script>
-  const activeTouches = new Map();
-
+<script>
   document.querySelectorAll('.bead').forEach(bead => {
-    let originalY = 0;
-    let currentDeltaY = 0;
+    let startY = 0;
+    let startTop = 0;
+    let maxMove = 0;
+    let minMove = 0;
+
+    const isHeaven = bead.classList.contains('heaven');
+    const isEarth = bead.classList.contains('earth');
+
+    bead.style.position = 'relative';
+    bead.style.transition = 'none';
 
     bead.addEventListener('touchstart', e => {
       const touch = e.touches[0];
-      originalY = touch.clientY;
+      startY = touch.clientY;
+      startTop = parseFloat(bead.style.top || 0);
+
+      // Set movement limits (in px)
+      if (isHeaven) {
+        maxMove = 50;   // how far down heaven bead can go
+        minMove = 0;    // heaven bead starts at top
+      } else if (isEarth) {
+        maxMove = 0;    // earth bead starts at bottom
+        minMove = -80;  // how far up earth bead can go
+      }
+
       bead.style.transition = 'none';
-      activeTouches.set(touch.identifier, { bead, originalY });
     });
 
     bead.addEventListener('touchmove', e => {
       const touch = e.touches[0];
-      const data = activeTouches.get(touch.identifier);
-      if (!data) return;
+      const deltaY = touch.clientY - startY;
+      let newTop = startTop + deltaY;
 
-      currentDeltaY = touch.clientY - data.originalY;
-      // Limit movement to vertical direction
-      bead.style.transform = `translateY(${currentDeltaY}px)`;
+      // Clamp within range
+      if (newTop > maxMove) newTop = maxMove;
+      if (newTop < minMove) newTop = minMove;
+
+      bead.style.top = newTop + 'px';
     });
 
-    bead.addEventListener('touchend', e => {
-      const touch = e.changedTouches[0];
-      const data = activeTouches.get(touch.identifier);
-      if (!data) return;
-
-      bead.style.transition = 'transform 0.2s';
-      activeTouches.delete(touch.identifier);
-
-      const threshold = 30; // minimum movement to change state
-      const isHeaven = bead.classList.contains('heaven');
-      const isEarth = bead.classList.contains('earth');
-
+    bead.addEventListener('touchend', () => {
+      // Optional: Snap to "active" or "inactive" position
       if (isHeaven) {
-        if (currentDeltaY > threshold) {
+        if (parseFloat(bead.style.top || 0) > 25) {
           bead.classList.add('active');
-          bead.style.transform = 'translateY(150%)';
+          bead.style.top = '45px';
         } else {
           bead.classList.remove('active');
-          bead.style.transform = 'translateY(0)';
+          bead.style.top = '0px';
         }
-      }
-
-      if (isEarth) {
-        const allEarth = Array.from(bead.parentElement.children);
-        const index = allEarth.indexOf(bead);
-
-        if (currentDeltaY < -threshold && !bead.classList.contains('active')) {
-          const allBeforeActive = allEarth.slice(0, index).every(b => b.classList.contains('active'));
+      } else if (isEarth) {
+        if (parseFloat(bead.style.top || 0) < -40) {
+          // only allow if beads below are active
+          const siblings = Array.from(bead.parentElement.children);
+          const index = siblings.indexOf(bead);
+          const allBeforeActive = siblings.slice(0, index).every(b => b.classList.contains('active'));
           if (allBeforeActive) {
             bead.classList.add('active');
-            bead.style.transform = 'translateY(-150%)';
+            bead.style.top = '-60px';
           } else {
-            bead.style.transform = 'translateY(0)';
-          }
-        } else if (currentDeltaY > threshold && bead.classList.contains('active')) {
-          const allAfterInactive = allEarth.slice(index + 1).every(b => !b.classList.contains('active'));
-          if (allAfterInactive) {
-            bead.classList.remove('active');
-            bead.style.transform = 'translateY(0)';
-          } else {
-            bead.style.transform = 'translateY(-150%)';
+            bead.style.top = '0px';
           }
         } else {
-          // No change
-          bead.style.transform = bead.classList.contains('active') ? 'translateY(-150%)' : 'translateY(0)';
+          // only deactivate if beads above are inactive
+          const siblings = Array.from(bead.parentElement.children);
+          const index = siblings.indexOf(bead);
+          const allAfterInactive = siblings.slice(index + 1).every(b => !b.classList.contains('active'));
+          if (allAfterInactive) {
+            bead.classList.remove('active');
+            bead.style.top = '0px';
+          } else {
+            bead.style.top = '-60px';
+          }
         }
       }
     });
