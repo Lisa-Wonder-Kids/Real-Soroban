@@ -265,7 +265,7 @@
       // clamp & apply
       const clampedTop = Math.min(Math.max(rawTop, minTop), maxTop);
       const deltaPx    = clampedTop - st.homeTop;
-      st.bead.style.transform = translateY(${deltaPx}px);
+      st.bead.style.transform = `translateY(${deltaPx}px)`;
     });
 
     bead.addEventListener('pointerup', snapAndCleanup);
