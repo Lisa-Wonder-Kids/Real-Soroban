@@ -16,7 +16,6 @@
       justify-content: center;
       align-items: center;
       touch-action: none;
-      -webkit-user-select: none;
       user-select: none;
       overscroll-behavior: none;
       -webkit-tap-highlight-color: transparent;
@@ -179,133 +178,93 @@
 <body>
   <div id="container">
     <div class="soroban">
-      <!-- 7 rods -->
-      <div class="rod">
-      <div class="rod-line">
-   </div>
-      <div class="heaven">
-      <div class="bead heaven">
-   </div>
-   </div>
-      <div class="gap-space">
-   </div>
-      <div class="earth">
-      <div class="bead earth">
-   </div>
-      <div class="bead earth">
-   </div>
-      <div class="bead earth">
-   </div>
-      <div class="bead earth">
-   </div>
-   </div>
-      <div class="bar">
-   </div>
-   </div>
-
+      <!-- 7 rods (copy as needed) -->
       <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
-
       <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
-
       <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
-
       <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
-
       <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
-
+      <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
       <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
     </div>
   </div>
 
-  <script>
-/* ────────────────────────────────────────────────────────────────
-   Soroban drag logic – smooth, multi-touch, pointer-events based
-   ──────────────────────────────────────────────────────────────── */
+  <script defer>
 (() => {
-  const ACTIVE_PTRS = new Map();     // pointerId → state object
+  const TOP_PADDING = 4;
+  const BOTTOM_PADDING = 4;
+  const active = new Map();
 
   document.querySelectorAll('.bead').forEach(bead => {
-    bead.style.touchAction = 'none';   // disable browser gestures
+    bead.style.touchAction = 'none';
 
     bead.addEventListener('pointerdown', e => {
-      const rod       = bead.closest('.rod');
-      const rodRect   = rod.getBoundingClientRect();
-      const barRect   = rod.querySelector('.bar').getBoundingClientRect();
-      const beadRect  = bead.getBoundingClientRect();
+      e.preventDefault();
+      const rod = bead.closest('.rod');
+      const bar = rod.querySelector('.bar');
+      const rodRect = rod.getBoundingClientRect();
+      const barRect = bar.getBoundingClientRect();
+      const beadRect = bead.getBoundingClientRect();
 
-      // save everything we’ll need on move
-      ACTIVE_PTRS.set(e.pointerId, {
+      active.set(e.pointerId, {
         bead,
-        heaven : bead.classList.contains('heaven'),
         rodRect,
         barRect,
-        startOffset : e.clientY - beadRect.top,            // finger-to-bead offset
-        homeTop     : beadRect.top,                        // starting pixel Y
-        homeTrans   : bead.style.transform || 'translateY(0px)'
+        startOffset: e.clientY - beadRect.top,
+        initialTop: beadRect.top,
+        heaven: bead.classList.contains('heaven')
       });
+
       bead.setPointerCapture(e.pointerId);
     });
 
     bead.addEventListener('pointermove', e => {
-      const st = ACTIVE_PTRS.get(e.pointerId);
+      const st = active.get(e.pointerId);
       if (!st) return;
 
-      // compute raw new top edge of the bead
-      const rawTop = e.clientY - st.startOffset;
+      const { bead, rodRect, barRect, heaven, startOffset, initialTop } = st;
+      const beadH = bead.getBoundingClientRect().height;
+      const rawTop = e.clientY - startOffset;
 
-      // movement limits differ for heaven vs earth beads
-      const beadH   = st.bead.getBoundingClientRect().height;
-      const minTop  = st.heaven
-                       ? st.rodRect.top + 4   // a little padding at top
-                       : st.barRect.bottom + 1;
-      const maxTop  = st.heaven
-                       ? st.barRect.top - beadH - 1
-                       : st.rodRect.bottom - beadH - 4;
+      const minTop = heaven ? rodRect.top + TOP_PADDING : barRect.bottom + 1;
+      const maxTop = heaven ? barRect.top - beadH - 1 : rodRect.bottom - beadH - BOTTOM_PADDING;
 
-      // clamp & apply
       const clampedTop = Math.min(Math.max(rawTop, minTop), maxTop);
-      const deltaPx    = clampedTop - st.homeTop;
-      st.bead.style.transform = `translateY(${deltaPx}px)`;
+      const deltaY = clampedTop - initialTop;
+
+      bead.style.transform = `translateY(${deltaY}px)`;
     });
 
-    bead.addEventListener('pointerup', snapAndCleanup);
-    bead.addEventListener('pointercancel', snapAndCleanup);
+    bead.addEventListener('pointerup', snapAndRelease);
+    bead.addEventListener('pointercancel', snapAndRelease);
   });
 
-  /* ─── snap to the nearest valid position & clear pointer state ── */
-  function snapAndCleanup (e) {
-    const st = ACTIVE_PTRS.get(e.pointerId);
+  function snapAndRelease(e) {
+    const st = active.get(e.pointerId);
     if (!st) return;
 
-    const beadRect = st.bead.getBoundingClientRect();
-    const beadMid  = beadRect.top + beadRect.height / 2;
-    const barMid   = st.barRect.top + st.barRect.height / 2;
+    const { bead, barRect, heaven } = st;
+    const beadRect = bead.getBoundingClientRect();
+    const midY = beadRect.top + beadRect.height / 2;
+    const barMid = barRect.top + barRect.height / 2;
 
-    if (st.heaven) {
-      // Heaven bead is active if lower than bar’s midpoint
-      const active = beadMid > barMid;
-      st.bead.classList.toggle('active', active);
+    if (heaven) {
+      bead.classList.toggle('active', midY > barMid);
     } else {
-      // Earth beads – active if upper edge is above bar
-      const earthBeads = Array.from(st.bead.parentElement.children);
-      const idx        = earthBeads.indexOf(st.bead);
+      const earthBeads = Array.from(bead.parentElement.children);
+      const idx = earthBeads.indexOf(bead);
 
-      if (beadMid < barMid) {
-        // move up ⇒ activate this and ones below
+      if (midY < barMid) {
         for (let i = idx; i >= 0; i--) earthBeads[i].classList.add('active');
       } else {
-        // move down ⇒ deactivate this and ones above
         for (let i = idx; i < earthBeads.length; i++) earthBeads[i].classList.remove('active');
       }
     }
 
-    // reset visual transform (we rely on .active CSS for the snap position)
-    st.bead.style.transform = '';
-    ACTIVE_PTRS.delete(e.pointerId);
+    bead.style.transform = '';
+    active.delete(e.pointerId);
   }
 })();
 </script>
-
 </body>
 </html>
- 
