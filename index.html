@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -16,6 +17,7 @@
       justify-content: center;
       align-items: center;
       touch-action: none;
+      -webkit-user-select: none;
       user-select: none;
       overscroll-behavior: none;
       -webkit-tap-highlight-color: transparent;
@@ -96,16 +98,33 @@
     }
 
     .bead {
+      will-change: transform;
       width: 50px;
       height: 30px;
       background: radial-gradient(circle at 30% 30%, #444, #111);
       border-radius: 50% / 40%;
       box-shadow: inset -2px -2px 5px rgba(255, 255, 255, 0.2),
                   inset 2px 2px 5px rgba(0, 0, 0, 0.4);
-      transition: transform 0.2s, background-color 0.2s;
+      transition: transform .15s ease, background-color .15s ease;
       z-index: 3;
       touch-action: none;
+    } 
+
+     /* bead is under the finger → plain white */
+    .bead.dragging {
+      transition: none;                                /* no easing while moving */
+      background: radial-gradient(circle at 30% 30%, #fff, #dcdcdc);
+      box-shadow: inset -2px -2px 5px rgba(0,0,0,.05),
+              inset  2px  2px 5px rgba(0,0,0,.25);
     }
+
+    /* bead counted (snapped “on”) → yellow */
+    .bead.active {
+      background: radial-gradient(circle at 30% 30%, #ffd700, #ffbf00);
+      box-shadow: inset -2px -2px 5px rgba(255,255,255,.4),
+              inset  2px  2px 5px rgba(0,0,0,.3);
+    }      
+
 
     .bead.active {
       background: radial-gradient(circle at 30% 30%, #FFD700, #FFA500);
@@ -178,108 +197,169 @@
 <body>
   <div id="container">
     <div class="soroban">
-      <!-- 7 rods (copy as needed) -->
+      <!-- 7 rods -->
+      <div class="rod">
+      <div class="rod-line">
+   </div>
+      <div class="heaven">
+      <div class="bead heaven">
+   </div>
+   </div>
+      <div class="gap-space">
+   </div>
+      <div class="earth">
+      <div class="bead earth">
+   </div>
+      <div class="bead earth">
+   </div>
+      <div class="bead earth">
+   </div>
+      <div class="bead earth">
+   </div>
+   </div>
+      <div class="bar">
+   </div>
+   </div>
+
       <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
+
       <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
+
       <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
+
       <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
+
       <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
-      <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
+
       <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
     </div>
   </div>
-
 <script>
-/* ===========================================================
-   Soroban 2.0 – smooth, multi-touch, pointer-events based
-   =========================================================== */
+/* =====================================================================
+   Soroban – free-drag beads + snap-to-nearest + side-sweep + shake
+   ===================================================================== */
 (() => {
-  const ACTIVE = new Map();                // pointerId → state
+  const SHAKE_G   = 16;          // m/s² needed to reset
+  const HAPTIC_MS = 12;          // vibration per snap (0 = mute)
 
-  // disable all browser-gestures on the whole board
-  document.querySelector('.soroban').style.touchAction = 'none';
+  /* ───── shorthands ──── */
+  const $  = s => document.querySelector(s);
+  const $$ = s => [...document.querySelectorAll(s)];
 
-  /* ─── set up every bead ─────────────────────────────────── */
-  document.querySelectorAll('.bead').forEach(bead => {
-    bead.addEventListener('pointerdown', startDrag);
-    bead.addEventListener('pointermove',  duringDrag);
-    bead.addEventListener('pointerup',    finishDrag);
-    bead.addEventListener('pointercancel',finishDrag);
+  /* ───── per-pointer store ──── */
+  const fingers = new Map();   // id → state object
+
+  /* ───── attach listeners ──── */
+  $('.soroban').style.touchAction = 'none';   // kill scroll / zoom
+
+  $$('.bead').forEach(bead => {
+    bead.addEventListener('pointerdown',  down);
+    bead.addEventListener('pointermove',  move);
+    bead.addEventListener('pointerup',    up);
+    bead.addEventListener('pointercancel',up);
   });
 
-  /* ─── pointerdown ───────────────────────────────────────── */
-  function startDrag (e) {
+  /* ───── pointerdown ──── */
+  function down (e) {
     const bead      = e.currentTarget;
     const rod       = bead.closest('.rod');
     const rodRect   = rod.getBoundingClientRect();
     const barRect   = rod.querySelector('.bar').getBoundingClientRect();
     const beadRect  = bead.getBoundingClientRect();
+    const heaven    = bead.classList.contains('heaven');
+    const bounds    = heaven
+                      ? { top: rodRect.top,       bot: barRect.top - beadRect.height }
+                      : { top: barRect.bottom,    bot: rodRect.bottom - beadRect.height };
 
-    bead.classList.add('grabbed','pressed');      // visual feedback
     bead.setPointerCapture(e.pointerId);
+    bead.classList.add('dragging');
 
-    ACTIVE.set(e.pointerId, {
-      bead,
-      heaven : bead.classList.contains('heaven'),
-      rodTop : rodRect.top,
-      rodBottom : rodRect.bottom - beadRect.height,
-      barTop : barRect.top - beadRect.height,
-      barBottom : barRect.bottom,
-      offsetY : e.clientY - beadRect.top,
-      homeTop : beadRect.top
+    fingers.set(e.pointerId, {
+      bead, heaven, bounds,
+      startTop : beadRect.top,
+      offsetY  : e.clientY - beadRect.top,
+      lastRod  : rod
     });
   }
 
-  /* ─── pointermove – follow the finger exactly ───────────── */
-  function duringDrag (e) {
-    const st = ACTIVE.get(e.pointerId);
-    if (!st) return;
+  /* ───── pointermove ──── */
+  function move (e) {
+    const f = fingers.get(e.pointerId);
+    if (!f) return;
 
-    // current desired top edge of bead
-    let top = e.clientY - st.offsetY;
+    /* follow finger */
+    let newTop = e.clientY - f.offsetY;
+    newTop = Math.max(f.bounds.top, Math.min(newTop, f.bounds.bot));
+    f.bead.style.transform = translateY(${newTop - f.startTop}px);
 
-    // clamp within allowed travel for this bead
-    if (st.heaven) {
-      top = Math.max(st.rodTop, Math.min(top, st.barTop));
-    } else {                                      // earth bead
-      top = Math.max(st.barBottom, Math.min(top, st.rodBottom));
+    /* side-sweep: if we entered a new rod, copy visual drag there */
+    const hit  = document.elementFromPoint(e.clientX, e.clientY);
+    const rod  = hit?.closest?.('.rod');
+    if (rod && rod !== f.lastRod) {
+      const target = f.heaven
+                   ? rod.querySelector('.bead.heaven')
+                   : [...rod.querySelectorAll('.bead.earth')].pop();
+      if (target && !target.classList.contains('dragging')) {
+        target.style.transform = f.bead.style.transform;
+      }
+      f.lastRod = rod;
     }
-
-    // translate relative to its starting position
-    st.bead.style.transform = translateY(${top - st.homeTop}px);
   }
 
-  /* ─── pointerup / cancel – snap + clean up ─────────────── */
-  function finishDrag (e) {
-    const st = ACTIVE.get(e.pointerId);
-    if (!st) return;
+  /* ───── pointerup / cancel ──── */
+  function up (e) {
+    const f = fingers.get(e.pointerId);
+    if (!f) return;
 
-    const beadRect = st.bead.getBoundingClientRect();
-    const beadMid  = beadRect.top + beadRect.height / 2;
-    const barMid   = (st.barTop + st.barBottom) / 2 + beadRect.height / 2;
+    const beadRect = f.bead.getBoundingClientRect();
+    const rod      = f.bead.closest('.rod');
+    const barRect  = rod.querySelector('.bar').getBoundingClientRect();
+    const center   = beadRect.top + beadRect.height / 2;
+    const barMid   = barRect.top + barRect.height / 2;
 
-    if (st.heaven) {
-      const active = beadMid > barMid;
-      st.bead.classList.toggle('active', active);
+    /* decide active vs inactive by proximity */
+    const makeActive = f.heaven ? center > barMid : center < barMid;
+
+    snapBead(f.bead, makeActive);
+    f.bead.classList.remove('dragging');
+    f.bead.style.transform = '';           // let CSS place it
+    f.bead.releasePointerCapture(e.pointerId);
+    fingers.delete(e.pointerId);
+  }
+
+  /* ───── snap logic + colour + chain for earth beads ──── */
+  function snapBead (bead, makeActive) {
+    const heaven = bead.classList.contains('heaven');
+
+    if (heaven) {
+      bead.classList.toggle('active', makeActive);
     } else {
-      const earthBeads = Array.from(st.bead.parentElement.children);
-      const idx        = earthBeads.indexOf(st.bead);
-
-      // if bead ended above the bar → activate it & everything below
-      if (beadMid < barMid) {
-        for (let i = idx; i >= 0; i--) earthBeads[i].classList.add('active');
-      } else { // otherwise deactivate it & everything above
-        for (let i = idx; i < earthBeads.length; i++) earthBeads[i].classList.remove('active');
+      const earths = [...bead.parentElement.children];
+      const idx    = earths.indexOf(bead);
+      if (makeActive) {
+        for (let i = idx; i >= 0; i--) earths[i].classList.add('active');
+      } else {
+        for (let i = idx; i < earths.length; i++) earths[i].classList.remove('active');
       }
     }
 
-    // reset visuals, let CSS positions take over
-    st.bead.classList.remove('grabbed','pressed');
-    st.bead.style.transform = '';
-    st.bead.releasePointerCapture(e.pointerId);
-    ACTIVE.delete(e.pointerId);
+    if (HAPTIC_MS) navigator.vibrate(HAPTIC_MS);
+  }
+
+  /* ───── shake-to-reset ──── */
+  if (window.DeviceMotionEvent) {
+    let last = 0;
+    window.addEventListener('devicemotion', ev => {
+      const { x, y, z } = ev.accelerationIncludingGravity;
+      if (Math.hypot(x, y, z) > SHAKE_G && performance.now() - last > 750) {
+        $$('.bead.active').forEach(b => b.classList.remove('active'));
+        if (HAPTIC_MS) navigator.vibrate([0,40,40,40]);
+        last = performance.now();
+      }
+    });
   }
 })();
 </script>
 </body>
 </html>
+ 
