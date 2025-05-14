@@ -96,22 +96,22 @@
     }
 
     .bead {
-      will-change: transform;
-      transition: transform 0.15s ease, background-color 0.15s ease;
-      }
-     
-     /* no easing while we’re actually dragging */
-    .bead.grabbed { 
-       transition: none;
-     }
+      width: 50px;
+      height: 30px;
+      background: radial-gradient(circle at 30% 30%, #444, #111);
+      border-radius: 50% / 40%;
+      box-shadow: inset -2px -2px 5px rgba(255, 255, 255, 0.2),
+                  inset 2px 2px 5px rgba(0, 0, 0, 0.4);
+      transition: transform 0.2s, background-color 0.2s;
+      z-index: 3;
+      touch-action: none;
+    }
 
-
-    /* show the finger is on this bead */
-.bead.pressed {
-  background: radial-gradient(circle at 30% 30%, #ffd700, #ff8c00);
-  box-shadow: inset -2px -2px 5px rgba(255,255,255,.4),
-              inset  2px  2px 5px rgba(0,0,0,.35);
-}
+    .bead.active {
+      background: radial-gradient(circle at 30% 30%, #FFD700, #FFA500);
+      box-shadow: inset -2px -2px 5px rgba(255, 255, 255, 0.4),
+                  inset 2px 2px 5px rgba(0, 0, 0, 0.3);
+    }
 
     .bead.heaven.active {
       transform: translateY(150%);
@@ -246,7 +246,7 @@
     }
 
     // translate relative to its starting position
-    st.bead.style.transform = `translateY(${top - st.homeTop}px)`;
+    st.bead.style.transform = translateY(${top - st.homeTop}px);
   }
 
   /* ─── pointerup / cancel – snap + clean up ─────────────── */
@@ -280,6 +280,6 @@
     ACTIVE.delete(e.pointerId);
   }
 })();
-</script> 
+</script>
 </body>
 </html>
