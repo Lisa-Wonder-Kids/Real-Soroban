@@ -219,75 +219,97 @@
 
   <script>
   const activeTouches = {};
-   document.querySelectorAll('.bead').forEach(bead => {
-  let startY = 0;
-  let currentY = 0;
 
-  bead.addEventListener('touchstart', (e) => {
-    const touch = e.touches[0];
-    startY = touch.clientY;
-    currentY = 0;
-    bead.style.transition = 'none'; // No animation while dragging
-  });
+  document.querySelectorAll('.bead').forEach(bead => {
+    let startY = 0;
+    let moved = false;
 
-  bead.addEventListener('touchmove', (e) => {
-    e.preventDefault(); // Prevent scrolling
+    bead.addEventListener('touchstart', (e) => {
+      startY = e.touches[0].clientY;
+      moved = false;
 
-    const touch = e.touches[0];
-    currentY = touch.clientY - startY;
-
-    const isHeaven = bead.classList.contains('heaven');
-    const isEarth = bead.classList.contains('earth');
-    const maxMove = 40;
-
-    if (isHeaven) {
-      const move = Math.max(0, Math.min(currentY, maxMove));
-      bead.style.transform = `translateY(${move}px)`;
-    } else if (isEarth) {
-      const move = Math.min(0, Math.max(currentY, -maxMove));
-      bead.style.transform = `translateY(${move}px)`;
-    }
-  });
-
-  bead.addEventListener('touchend', () => {
-    bead.style.transition = 'transform 0.2s ease';
-
-    const isHeaven = bead.classList.contains('heaven');
-    const isEarth = bead.classList.contains('earth');
-
-    if (isHeaven) {
-      if (currentY > 20) {
-        bead.classList.add('active');
-        bead.style.transform = 'translateY(150%)';
-      } else {
-        bead.classList.remove('active');
-        bead.style.transform = 'translateY(0)';
+      for (let touch of e.changedTouches) {
+        activeTouches[touch.identifier] = {
+          bead: bead,
+          startY: touch.clientY
+        };
       }
-    } else if (isEarth) {
+    });
+
+    bead.addEventListener('touchmove', (e) => {
+      const touch = e.changedTouches[0];
+      const data = activeTouches[touch.identifier];
+      if (!data) return;
+
+      const deltaY = touch.clientY - data.startY;
+
+      if (Math.abs(deltaY) < 10) return; // prevent small accidental swipes
+
+      moved = true;
+
+      const currentBead = data.bead;
+      const isHeaven = currentBead.classList.contains('heaven');
+      const isEarth = currentBead.classList.contains('earth');
+
+      if (isHeaven) {
+        if (deltaY > 20) currentBead.classList.add('active');
+        else if (deltaY < -20) currentBead.classList.remove('active');
+      }
+
+      if (isEarth) {
+        const allEarth = Array.from(currentBead.parentElement.children);
+        const index = allEarth.indexOf(currentBead);
+
+        if (deltaY < -20) {
+          // Swipe up to activate this and beads below
+          for (let i = index; i >= 0; i--) {
+            allEarth[i].classList.add('active');
+          }
+        } else if (deltaY > 20) {
+          // Swipe down to deactivate this and beads above
+          for (let i = index; i < allEarth.length; i++) {
+            allEarth[i].classList.remove('active');
+          }
+        }
+      }
+    });
+
+    bead.addEventListener('touchend', (e) => {
+      for (let touch of e.changedTouches) {
+        delete activeTouches[touch.identifier];
+      }
+      if (!moved) {
+        // Tap fallback (for desktop or quick tap)
+        toggleBead(bead);
+      }
+    });
+  });
+
+  function toggleBead(bead) {
+    const isHeaven = bead.classList.contains('heaven');
+    const isEarth = bead.classList.contains('earth');
+
+    if (isHeaven) {
+      bead.classList.toggle('active');
+    }
+
+    if (isEarth) {
       const allEarth = Array.from(bead.parentElement.children);
       const index = allEarth.indexOf(bead);
+      const isActive = bead.classList.contains('active');
 
-      if (currentY < -20) {
+      if (!isActive) {
         for (let i = index; i >= 0; i--) {
           allEarth[i].classList.add('active');
-          allEarth[i].style.transform = 'translateY(-150%)';
         }
       } else {
         for (let i = index; i < allEarth.length; i++) {
           allEarth[i].classList.remove('active');
-          allEarth[i].style.transform = 'translateY(0)';
         }
       }
     }
-
-    // Reset
-    startY = 0;
-    currentY = 0;
-  });
-});
-
-
-  </script>
+  }
+</script>
 
 </body>
 </html>
