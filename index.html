@@ -218,97 +218,92 @@
   </div>
 
   <script>
-  const activeTouches = {};
+/* ────────────────────────────────────────────────────────────────
+   Soroban drag logic – smooth, multi-touch, pointer-events based
+   ──────────────────────────────────────────────────────────────── */
+(() => {
+  const ACTIVE_PTRS = new Map();     // pointerId → state object
 
   document.querySelectorAll('.bead').forEach(bead => {
-    let startY = 0;
-    let moved = false;
+    bead.style.touchAction = 'none';   // disable browser gestures
 
-    bead.addEventListener('touchstart', (e) => {
-      startY = e.touches[0].clientY;
-      moved = false;
+    bead.addEventListener('pointerdown', e => {
+      const rod       = bead.closest('.rod');
+      const rodRect   = rod.getBoundingClientRect();
+      const barRect   = rod.querySelector('.bar').getBoundingClientRect();
+      const beadRect  = bead.getBoundingClientRect();
 
-      for (let touch of e.changedTouches) {
-        activeTouches[touch.identifier] = {
-          bead: bead,
-          startY: touch.clientY
-        };
-      }
+      // save everything we’ll need on move
+      ACTIVE_PTRS.set(e.pointerId, {
+        bead,
+        heaven : bead.classList.contains('heaven'),
+        rodRect,
+        barRect,
+        startOffset : e.clientY - beadRect.top,            // finger-to-bead offset
+        homeTop     : beadRect.top,                        // starting pixel Y
+        homeTrans   : bead.style.transform || 'translateY(0px)'
+      });
+      bead.setPointerCapture(e.pointerId);
     });
 
-    bead.addEventListener('touchmove', (e) => {
-      const touch = e.changedTouches[0];
-      const data = activeTouches[touch.identifier];
-      if (!data) return;
+    bead.addEventListener('pointermove', e => {
+      const st = ACTIVE_PTRS.get(e.pointerId);
+      if (!st) return;
 
-      const deltaY = touch.clientY - data.startY;
+      // compute raw new top edge of the bead
+      const rawTop = e.clientY - st.startOffset;
 
-      if (Math.abs(deltaY) < 10) return; // prevent small accidental swipes
+      // movement limits differ for heaven vs earth beads
+      const beadH   = st.bead.getBoundingClientRect().height;
+      const minTop  = st.heaven
+                       ? st.rodRect.top + 4   // a little padding at top
+                       : st.barRect.bottom + 1;
+      const maxTop  = st.heaven
+                       ? st.barRect.top - beadH - 1
+                       : st.rodRect.bottom - beadH - 4;
 
-      moved = true;
-
-      const currentBead = data.bead;
-      const isHeaven = currentBead.classList.contains('heaven');
-      const isEarth = currentBead.classList.contains('earth');
-
-      if (isHeaven) {
-        if (deltaY > 20) currentBead.classList.add('active');
-        else if (deltaY < -20) currentBead.classList.remove('active');
-      }
-
-      if (isEarth) {
-        const allEarth = Array.from(currentBead.parentElement.children);
-        const index = allEarth.indexOf(currentBead);
-
-        if (deltaY < -20) {
-          // Swipe up to activate this and beads below
-          for (let i = index; i >= 0; i--) {
-            allEarth[i].classList.add('active');
-          }
-        } else if (deltaY > 20) {
-          // Swipe down to deactivate this and beads above
-          for (let i = index; i < allEarth.length; i++) {
-            allEarth[i].classList.remove('active');
-          }
-        }
-      }
+      // clamp & apply
+      const clampedTop = Math.min(Math.max(rawTop, minTop), maxTop);
+      const deltaPx    = clampedTop - st.homeTop;
+      st.bead.style.transform = translateY(${deltaPx}px);
     });
 
-    bead.addEventListener('touchend', (e) => {
-      for (let touch of e.changedTouches) {
-        delete activeTouches[touch.identifier];
-      }
-      if (!moved) {
-        // Tap fallback (for desktop or quick tap)
-        toggleBead(bead);
-      }
-    });
+    bead.addEventListener('pointerup', snapAndCleanup);
+    bead.addEventListener('pointercancel', snapAndCleanup);
   });
 
-  function toggleBead(bead) {
-    const isHeaven = bead.classList.contains('heaven');
-    const isEarth = bead.classList.contains('earth');
+  /* ─── snap to the nearest valid position & clear pointer state ── */
+  function snapAndCleanup (e) {
+    const st = ACTIVE_PTRS.get(e.pointerId);
+    if (!st) return;
 
-    if (isHeaven) {
-      bead.classList.toggle('active');
-    }
+    const beadRect = st.bead.getBoundingClientRect();
+    const beadMid  = beadRect.top + beadRect.height / 2;
+    const barMid   = st.barRect.top + st.barRect.height / 2;
 
-    if (isEarth) {
-      const allEarth = Array.from(bead.parentElement.children);
-      const index = allEarth.indexOf(bead);
-      const isActive = bead.classList.contains('active');
+    if (st.heaven) {
+      // Heaven bead is active if lower than bar’s midpoint
+      const active = beadMid > barMid;
+      st.bead.classList.toggle('active', active);
+    } else {
+      // Earth beads – active if upper edge is above bar
+      const earthBeads = Array.from(st.bead.parentElement.children);
+      const idx        = earthBeads.indexOf(st.bead);
 
-      if (!isActive) {
-        for (let i = index; i >= 0; i--) {
-          allEarth[i].classList.add('active');
-        }
+      if (beadMid < barMid) {
+        // move up ⇒ activate this and ones below
+        for (let i = idx; i >= 0; i--) earthBeads[i].classList.add('active');
       } else {
-        for (let i = index; i < allEarth.length; i++) {
-          allEarth[i].classList.remove('active');
-        }
+        // move down ⇒ deactivate this and ones above
+        for (let i = idx; i < earthBeads.length; i++) earthBeads[i].classList.remove('active');
       }
     }
+
+    // reset visual transform (we rely on .active CSS for the snap position)
+    st.bead.style.transform = '';
+    ACTIVE_PTRS.delete(e.pointerId);
   }
+})();
 </script>
 
 </body>
