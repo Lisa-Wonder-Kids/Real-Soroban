@@ -290,7 +290,7 @@
     /* follow finger */
     let newTop = e.clientY - f.offsetY;
     newTop = Math.max(f.bounds.top, Math.min(newTop, f.bounds.bot));
-    f.bead.style.transform = translateY(${newTop - f.startTop}px);
+    f.bead.style.transform = `translateY(${newTop - f.startTop}px)`;
 
     /* side-sweep: if we entered a new rod, copy visual drag there */
     const hit  = document.elementFromPoint(e.clientX, e.clientY);
