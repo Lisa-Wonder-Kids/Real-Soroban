@@ -218,99 +218,61 @@
   </div>
 
   <script>
-  const activeTouches = {};
+  // Loop through each rod to enable finger sliding
+  const rods = document.querySelectorAll('.rod');
 
-  document.querySelectorAll('.bead').forEach(bead => {
-    let startY = 0;
-    let moved = false;
+  rods.forEach(rod => {
+    let touchStartY = null;
 
-    bead.addEventListener('touchstart', (e) => {
-      startY = e.touches[0].clientY;
-      moved = false;
-
-      for (let touch of e.changedTouches) {
-        activeTouches[touch.identifier] = {
-          bead: bead,
-          startY: touch.clientY
-        };
-      }
+    // Track touchstart on rod
+    rod.addEventListener('touchstart', (e) => {
+      const touch = e.touches[0];
+      touchStartY = touch.clientY;
     });
 
-    bead.addEventListener('touchmove', (e) => {
-      const touch = e.changedTouches[0];
-      const data = activeTouches[touch.identifier];
-      if (!data) return;
+    // Handle sliding motion (finger moving)
+    rod.addEventListener('touchmove', (e) => {
+      e.preventDefault(); // Prevent scroll/zoom
+      const touch = e.touches[0];
+      const currentY = touch.clientY;
+      const deltaY = currentY - touchStartY;
 
-      const deltaY = touch.clientY - data.startY;
+      // Heaven bead element
+      const heavenBead = rod.querySelector('.bead.heaven');
 
-      if (Math.abs(deltaY) < 10) return; // prevent small accidental swipes
+      // Earth bead elements (array)
+      const earthBeads = Array.from(rod.querySelectorAll('.bead.earth'));
 
-      moved = true;
-
-      const currentBead = data.bead;
-      const isHeaven = currentBead.classList.contains('heaven');
-      const isEarth = currentBead.classList.contains('earth');
-
-      if (isHeaven) {
-        if (deltaY > 20) currentBead.classList.add('active');
-        else if (deltaY < -20) currentBead.classList.remove('active');
+      if (deltaY < -20) {
+        // Swipe up: activate heaven bead
+        heavenBead.classList.add('active');
+      } else if (deltaY > 20) {
+        // Swipe down: deactivate heaven bead
+        heavenBead.classList.remove('active');
       }
 
-      if (isEarth) {
-        const allEarth = Array.from(currentBead.parentElement.children);
-        const index = allEarth.indexOf(currentBead);
+      // For earth beads: calculate finger Y position relative to rod
+      const rodRect = rod.getBoundingClientRect();
+      const relativeY = currentY - rodRect.top;
+      const step = rodRect.height / (earthBeads.length + 2); // split by number of beads
 
-        if (deltaY < -20) {
-          // Swipe up to activate this and beads below
-          for (let i = index; i >= 0; i--) {
-            allEarth[i].classList.add('active');
-          }
-        } else if (deltaY > 20) {
-          // Swipe down to deactivate this and beads above
-          for (let i = index; i < allEarth.length; i++) {
-            allEarth[i].classList.remove('active');
-          }
+      // Activate earth beads from top to current finger position
+      earthBeads.forEach((bead, index) => {
+        const beadY = step * (index + 2); // offset from top
+        if (relativeY > beadY) {
+          bead.classList.add('active');
+        } else {
+          bead.classList.remove('active');
         }
-      }
+      });
     });
 
-    bead.addEventListener('touchend', (e) => {
-      for (let touch of e.changedTouches) {
-        delete activeTouches[touch.identifier];
-      }
-      if (!moved) {
-        // Tap fallback (for desktop or quick tap)
-        toggleBead(bead);
-      }
+    // Reset touch start when finger is lifted
+    rod.addEventListener('touchend', () => {
+      touchStartY = null;
     });
   });
-
-  function toggleBead(bead) {
-    const isHeaven = bead.classList.contains('heaven');
-    const isEarth = bead.classList.contains('earth');
-
-    if (isHeaven) {
-      bead.classList.toggle('active');
-    }
-
-    if (isEarth) {
-      const allEarth = Array.from(bead.parentElement.children);
-      const index = allEarth.indexOf(bead);
-      const isActive = bead.classList.contains('active');
-
-      if (!isActive) {
-        for (let i = index; i >= 0; i--) {
-          allEarth[i].classList.add('active');
-        }
-      } else {
-        for (let i = index; i < allEarth.length; i++) {
-          allEarth[i].classList.remove('active');
-        }
-      }
-    }
-  }
 </script>
-
 </body>
 </html>
  
