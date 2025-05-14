@@ -216,63 +216,42 @@
       <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
     </div>
   </div>
-
+ <!-- JavaScript for interactivity -->
   <script>
-  // Loop through each rod to enable finger sliding
-  const rods = document.querySelectorAll('.rod');
+    // Get all bead elements
+    const beads = document.querySelectorAll('.bead');
 
-  rods.forEach(rod => {
-    let touchStartY = null;
+    // Loop through each bead
+    beads.forEach(bead => {
+      // Add touchstart event
+      bead.addEventListener('touchstart', (e) => {
+        e.preventDefault(); // Prevent default scroll/zoom
+        const isHeaven = bead.classList.contains('heaven');
 
-    // Track touchstart on rod
-    rod.addEventListener('touchstart', (e) => {
-      const touch = e.touches[0];
-      touchStartY = touch.clientY;
-    });
-
-    // Handle sliding motion (finger moving)
-    rod.addEventListener('touchmove', (e) => {
-      e.preventDefault(); // Prevent scroll/zoom
-      const touch = e.touches[0];
-      const currentY = touch.clientY;
-      const deltaY = currentY - touchStartY;
-
-      // Heaven bead element
-      const heavenBead = rod.querySelector('.bead.heaven');
-
-      // Earth bead elements (array)
-      const earthBeads = Array.from(rod.querySelectorAll('.bead.earth'));
-
-      if (deltaY < -20) {
-        // Swipe up: activate heaven bead
-        heavenBead.classList.add('active');
-      } else if (deltaY > 20) {
-        // Swipe down: deactivate heaven bead
-        heavenBead.classList.remove('active');
-      }
-
-      // For earth beads: calculate finger Y position relative to rod
-      const rodRect = rod.getBoundingClientRect();
-      const relativeY = currentY - rodRect.top;
-      const step = rodRect.height / (earthBeads.length + 2); // split by number of beads
-
-      // Activate earth beads from top to current finger position
-      earthBeads.forEach((bead, index) => {
-        const beadY = step * (index + 2); // offset from top
-        if (relativeY > beadY) {
-          bead.classList.add('active');
+        if (isHeaven) {
+          // Toggle heaven bead: only 1 can be active per rod
+          const siblings = bead.parentElement.querySelectorAll('.bead');
+          siblings.forEach(b => b.classList.remove('active'));
+          bead.classList.toggle('active');
         } else {
-          bead.classList.remove('active');
+          // Toggle earth bead: up to 4 can be active, from top down
+          const earthBeads = Array.from(bead.parentElement.querySelectorAll('.bead'));
+          const index = earthBeads.indexOf(bead);
+          const isActive = bead.classList.contains('active');
+
+          earthBeads.forEach((b, i) => {
+            if (!isActive) {
+              if (i <= index) b.classList.add('active');
+              else b.classList.remove('active');
+            } else {
+              if (i >= index) b.classList.remove('active');
+            }
+          });
         }
       });
     });
+  </script>
 
-    // Reset touch start when finger is lifted
-    rod.addEventListener('touchend', () => {
-      touchStartY = null;
-    });
-  });
-</script>
 </body>
 </html>
  
