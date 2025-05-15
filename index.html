@@ -23,17 +23,29 @@
       overscroll-behavior: none;
       -webkit-tap-highlight-color: transparent;
     }
-    .button-container {
-    display: flex;
-    justify-content: center; /* center horizontally */
-    align-items: center;     /* center vertically */
-    height: 100vh;           /* full viewport height */
-    gap: 20px;               /* space between buttons */
-  }
-  button {
-    padding: 12px 24px;
-    font-size: 18px;
-  }
+    .fullscreen-toggle {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 9999;
+    }
+
+    #fullscreenBtn, #exitFullscreenBtn {
+  width: 30px;       /* smaller */
+  height: 30px;
+  cursor: pointer;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10000;   /* on top */
+  display: none;    /* initially hidden, except #fullscreenBtn */
+}
+
+#fullscreenBtn {
+  display: inline;
+}
+    
+
 
     #container {
       width: 100%;
@@ -190,9 +202,8 @@
   </style>
 </head>
 <body>
- <button onclick="openFullscreen()">Open Fullscreen</button>
-<button onclick="closeFullscreen()">Exit Fullscreen</button>
-
+ <img id="fullscreenBtn" src="full.png" style="display:inline;" onclick="openFullscreen()" />
+<img id="exitFullscreenBtn" src="close.png" style="display:none;" onclick="closeFullscreen()" />
   <div id="container">
     <div class="soroban">
       <!-- 7 rods -->
@@ -233,27 +244,42 @@
     </div>
   </div>
 <script>
-  var elem = document.documentElement;
+    const fullscreenBtn = document.getElementById('fullscreenBtn');
+  const exitFullscreenBtn = document.getElementById('exitFullscreenBtn');
+  const elem = document.documentElement;
 
-  function openFullscreen() {
-    if (elem.requestFullscreen) {
-      elem.requestFullscreen();
-    } else if (elem.webkitRequestFullscreen) {
-      elem.webkitRequestFullscreen();
-    } else if (elem.msRequestFullscreen) {
-      elem.msRequestFullscreen();
-    }
+function openFullscreen() {
+  if (elem.requestFullscreen) {
+    elem.requestFullscreen();
+  } else if (elem.webkitRequestFullscreen) {
+    elem.webkitRequestFullscreen();
+  } else if (elem.msRequestFullscreen) {
+    elem.msRequestFullscreen();
   }
+}
 
-  function closeFullscreen() {
-    if (document.exitFullscreen) {
-      document.exitFullscreen();
-    } else if (document.webkitExitFullscreen) {
-      document.webkitExitFullscreen();
-    } else if (document.msExitFullscreen) {
-      document.msExitFullscreen();
-    }
+function closeFullscreen() {
+  if (document.exitFullscreen) {
+    document.exitFullscreen();
+  } else if (document.webkitExitFullscreen) {
+    document.webkitExitFullscreen();
+  } else if (document.msExitFullscreen) {
+    document.msExitFullscreen();
   }
+}
+
+
+  // Toggle visibility of buttons when fullscreen changes
+  document.addEventListener('fullscreenchange', toggleFullscreenButtons);
+  document.addEventListener('webkitfullscreenchange', toggleFullscreenButtons);
+  document.addEventListener('msfullscreenchange', toggleFullscreenButtons);
+
+  function toggleFullscreenButtons() {
+  const isFull = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+  fullscreenBtn.style.display = isFull ? 'none' : 'inline';
+  exitFullscreenBtn.style.display = isFull ? 'inline' : 'none';
+}
+
 
 /* =====================================================================
    Soroban – pro-level touch & gesture layer
