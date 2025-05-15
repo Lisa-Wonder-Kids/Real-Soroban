@@ -1,408 +1,510 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Soroban</title>
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      width: 100vw;
-      height: 100dvh;
-      max-width: 100vw;
-      max-height: 100dvh;
-      background: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      touch-action: none;
-      -webkit-user-select: none;
-      user-select: none;
-      overscroll-behavior: none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .fullscreen-toggle {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 9999;
-    }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <title>Soroban</title>
+        <style>
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+                overflow: hidden;
+                width: 100vw;
+                height: 100dvh;
+                max-width: 100vw;
+                max-height: 100dvh;
+                background: white;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                touch-action: none;
+                -webkit-user-select: none;
+                user-select: none;
+                overscroll-behavior: none;
+                -webkit-tap-highlight-color: transparent;
+            }
+            .fullscreen-toggle {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                z-index: 9999;
+            }
 
-    #fullscreenBtn, #exitFullscreenBtn {
-  width: 30px;       /* smaller */
-  height: 30px;
-  cursor: pointer;
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 10000;   /* on top */
-  display: none;    /* initially hidden, except #fullscreenBtn */
-}
+            #fullscreenBtn,
+            #exitFullscreenBtn {
+                width: 30px;
+                height: 30px;
+                cursor: pointer;
+                position: absolute;
+                bottom: 10px; /* distance from bottom of sidebar */
+                left: 10px; /* distance from left edge of sidebar */
+                z-index: 10002; /* above sidebar */
+                display: none; /* controlled by JS */
+            }
 
-#fullscreenBtn {
-  display: inline;
-}
-    
+            #fullscreenBtn {
+                display: inline; /* show by default */
+            }
 
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 40px; /* width of vertical bar */
+                height: 100vh; /* full viewport height */
+                background: #6666ff;
+                display: flex;
+                justify-content: center;
+                align-items: flex-start;
+                padding-top: 20px;
+                box-shadow: 2px 0 5px rgba(0, 0, 0, 0.3);
+                z-index: 10001; /* above fullscreen buttons */
+            }
 
-    #container {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
+            #backBtn {
+                width: 40px;
+                height: 40px;
+                cursor: pointer;
+                user-select: none;
+                -webkit-user-select: none;
+                -webkit-tap-highlight-color: transparent;
+                filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.4));
+            }
 
-    .soroban {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: #9999ff;
-      padding: 5px;
-      box-shadow: 0 0 15px rgba(0,0,0,0.3);
-      overflow: hidden;
-    }
+            #container {
+                width: 150%;
+                height: 100%;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
 
-    .rod {
-      position: relative;
-      width: 90px;
-      height: 270px;
-      background: #8080ff;
-      border-radius: 5px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: space-between;
-    }
+            .soroban {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                background: #9999ff;
+                padding: 5px;
+                box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+                overflow: hidden;
+            }
 
-    .rod-line {
-      position: absolute;
-      top: 0;
-      bottom: 0;
-      width: 3px;
-      background: #6666ff;
-      z-index: 0;
-    }
+            .rod {
+                position: relative;
+                width: 100px;
+                height: 400px;
+                background: #8080ff;
+                border-radius: 5px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: space-between;
+            }
 
-    .heaven {
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-end;
-      align-items: center;
-      height: 12%;
-      gap: 2px;
-      z-index: 1;
-    }
+            .rod-line {
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                width: 3px;
+                background: #6666ff;
+                z-index: 0;
+            }
 
-    .gap-space {
-      height: 2%;
-      z-index: 1;
-    }
+            .heaven {
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-end;
+                align-items: center;
+                height: 12%;
+                gap: 2px;
+                z-index: 1;
+            }
 
-    .earth {
-      display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      align-items: center;
-      height: 52%;
-      margin-top: 2px;
-      z-index: 1;
-      gap: 3px;
-    }
+            .gap-space {
+                height: 2%;
+                z-index: 1;
+            }
 
-    .bar {
-      position: absolute;
-      top: 27%;
-      width: 100%;
-      height: 3px;
-      background: #6666ff;
-      z-index: 2;
-    }
+            .earth {
+                display: flex;
+                flex-direction: column;
+                justify-content: flex-start;
+                align-items: center;
+                height: 52%;
+                margin-top: 2px;
+                z-index: 1;
+                gap: 3px;
+            }
 
-    .bead {
-      width: 90px;
-      height: 300px;
-      margin: 0;
-      background: linear-gradient(to bottom, #000080, #000033); 
-      clip-path: polygon(
-       25% 0%, 75% 0%,
-       100% 50%,
-       75% 100%, 25% 100%,
-       0% 50%
-       );
-      box-shadow: inset -1px -1px 4px rgba(255, 255, 255, 0.3),
-              inset 1px 1px 4px rgba(0, 0, 0, 0.3);
-      transition: transform 0.2s;
-      touch-action: none;
-      z-index: 3;
-     }
+            .bar {
+                position: absolute;
+                top: 27%;
+                width: 100%;
+                height: 3px;
+                background: #6666ff;
+                z-index: 2;
+            }
 
+            .bead {
+                width: 90px;
+                height: 50px;
+                margin: 0;
+                background: linear-gradient(to bottom, #000080, #000033);
+                clip-path: polygon(
+                25% 0%,   /* Point 1: x=25%, y=0%   (top)    */
+                75% 0%,   /* Point 2: x=75%, y=0%   (top)    */
+                100% 50%, /* Point 3: x=100%, y=50% (middle) */
+                75% 100%, /* Point 4: x=75%, y=100% (bottom) */
+                25% 100%, /* Point 5: x=25%, y=100% (bottom) */
+                0% 50%    /* Point 6: x=0%, y=50%   (middle) */
+                );
+                
+                box-shadow: inset -1px -1px 4px rgba(255, 255, 255, 0.3), inset 1px                    1px 4px rgba(0, 0, 0, 0.3);
+                transition: transform 0.2s;
+                touch-action: none;
+                z-index: 3;
+            }
 
-    .bead.active {
-      background: radial-gradient(circle at 30% 30%, #FFD700, #FFA500);
-      box-shadow: inset -2px -2px 5px rgba(255, 255, 255, 0.4),
-                  inset 2px 2px 5px rgba(0, 0, 0, 0.3);
-    }
+            .bead.active {
+                background: radial-gradient(circle at 30% 30%, #ffd700, #ffa500);
+                box-shadow: inset -2px -2px 5px rgba(255, 255, 255, 0.4), inset 2px 2px 5px rgba(0, 0, 0, 0.3);
+            }
 
-    .bead.heaven.active {
-      transform: translateY(100%);
-    }
+            .bead.heaven.active {
+                transform: translateY(100%);
+            }
 
-   .bead.earth.active {
-     transform: translateY(-150%);
-     }
+            .bead.earth.active {
+                transform: translateY(-150%);
+            }
 
+            @media (max-width: 768px) {
+                .rod {
+                    width: 60px;
+                    height: 220px;
+                }
 
-   @media (max-width: 768px) {
-  .rod {
-    width: 60px;
-    height: 220px;
-  }
+                .bead {
+                    width: 60px;
+                    height: 30px;
+                }
+            }
 
-  .bead {
-    width: 60px;
-    height: 30px;
-  }
-}
+            @media (max-width: 480px) {
+                .rod {
+                    width: 50px;
+                    height: 200px;
+                }
 
-@media (max-width: 480px) {
-  .rod {
-    width: 50px;
-    height: 200px;
-  }
+                .bead {
+                    width: 50px;
+                    height: 25px;
+                }
+            }
 
-  .bead {
-    width: 50px;
-    height: 25px;
-  }
-}
+            @media screen and (orientation: portrait) {
+                body::before {
+                    content: "Please rotate your device";
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: black;
+                    color: white;
+                    font-size: 2rem;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 9999;
+                    text-align: center;
+                    padding: 1em;
+                }
+                #container {
+                    display: none;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="sidebar">
+            <img id="backBtn" src="back.png" alt="Back" title="Go Back" />
+            <img id="fullscreenBtn" src="full.png" style="display: inline;" onclick="openFullscreen()" />
+            <img id="exitFullscreenBtn" src="close.png" style="display: none;" onclick="closeFullscreen()" />
+        </div>
 
+        <div id="container">
+            <div class="soroban">
+                <!-- 7 rods -->
+                <div class="rod">
+                    <div class="rod-line"></div>
+                    <div class="heaven">
+                        <div class="bead heaven"></div>
+                    </div>
+                    <div class="gap-space"></div>
+                    <div class="earth">
+                        <div class="bead earth"></div>
+                        <div class="bead earth"></div>
+                        <div class="bead earth"></div>
+                        <div class="bead earth"></div>
+                    </div>
+                    <div class="bar"></div>
+                </div>
 
-    @media screen and (orientation: portrait) {
-      body::before {
-        content: "Please rotate your device";
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: black;
-        color: white;
-        font-size: 2rem;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        z-index: 9999;
-        text-align: center;
-        padding: 1em;
-      }
-      #container {
-        display: none;
-      }
-    }
-  </style>
-</head>
-<body>
- <img id="fullscreenBtn" src="full.png" style="display:inline;" onclick="openFullscreen()" />
-<img id="exitFullscreenBtn" src="close.png" style="display:none;" onclick="closeFullscreen()" />
-  <div id="container">
-    <div class="soroban">
-      <!-- 7 rods -->
-      <div class="rod">
-      <div class="rod-line">
-   </div>
-      <div class="heaven">
-      <div class="bead heaven">
-   </div>
-   </div>
-      <div class="gap-space">
-   </div>
-      <div class="earth">
-      <div class="bead earth">
-   </div>
-      <div class="bead earth">
-   </div>
-      <div class="bead earth">
-   </div>
-      <div class="bead earth">
-   </div>
-   </div>
-      <div class="bar">
-   </div>
-   </div>
+                <div class="rod">
+                    <div class="rod-line"></div>
+                    <div class="heaven"><div class="bead heaven"></div></div>
+                    <div class="gap-space"></div>
+                    <div class="earth">
+                        <div class="bead earth"></div>
+                        <div class="bead earth"></div>
+                        <div class="bead earth"></div>
+                        <div class="bead earth"></div>
+                    </div>
+                    <div class="bar"></div>
+                </div>
 
-      <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
+                <div class="rod">
+                    <div class="rod-line"></div>
+                    <div class="heaven"><div class="bead heaven"></div></div>
+                    <div class="gap-space"></div>
+                    <div class="earth">
+                        <div class="bead earth"></div>
+                        <div class="bead earth"></div>
+                        <div class="bead earth"></div>
+                        <div class="bead earth"></div>
+                    </div>
+                    <div class="bar"></div>
+                </div>
 
-      <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
+                <div class="rod">
+                    <div class="rod-line"></div>
+                    <div class="heaven"><div class="bead heaven"></div></div>
+                    <div class="gap-space"></div>
+                    <div class="earth">
+                        <div class="bead earth"></div>
+                        <div class="bead earth"></div>
+                        <div class="bead earth"></div>
+                        <div class="bead earth"></div>
+                    </div>
+                    <div class="bar"></div>
+                </div>
 
-      <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
+                <div class="rod">
+                    <div class="rod-line"></div>
+                    <div class="heaven"><div class="bead heaven"></div></div>
+                    <div class="gap-space"></div>
+                    <div class="earth">
+                        <div class="bead earth"></div>
+                        <div class="bead earth"></div>
+                        <div class="bead earth"></div>
+                        <div class="bead earth"></div>
+                    </div>
+                    <div class="bar"></div>
+                </div>
 
-      <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
+                <div class="rod">
+                    <div class="rod-line"></div>
+                    <div class="heaven"><div class="bead heaven"></div></div>
+                    <div class="gap-space"></div>
+                    <div class="earth">
+                        <div class="bead earth"></div>
+                        <div class="bead earth"></div>
+                        <div class="bead earth"></div>
+                        <div class="bead earth"></div>
+                    </div>
+                    <div class="bar"></div>
+                </div>
 
-      <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
+                <div class="rod">
+                    <div class="rod-line"></div>
+                    <div class="heaven"><div class="bead heaven"></div></div>
+                    <div class="gap-space"></div>
+                    <div class="earth">
+                        <div class="bead earth"></div>
+                        <div class="bead earth"></div>
+                        <div class="bead earth"></div>
+                        <div class="bead earth"></div>
+                    </div>
+                    <div class="bar"></div>
+                </div>
+            </div>
+        </div>
+        <script>
+            const fullscreenBtn = document.getElementById("fullscreenBtn");
+            const exitFullscreenBtn = document.getElementById("exitFullscreenBtn");
+            const elem = document.documentElement;
 
-      <div class="rod"><div class="rod-line"></div><div class="heaven"><div class="bead heaven"></div></div><div class="gap-space"></div><div class="earth"><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div><div class="bead earth"></div></div><div class="bar"></div></div>
-    </div>
-  </div>
-<script>
-    const fullscreenBtn = document.getElementById('fullscreenBtn');
-  const exitFullscreenBtn = document.getElementById('exitFullscreenBtn');
-  const elem = document.documentElement;
+            function openFullscreen() {
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen();
+                } else if (elem.webkitRequestFullscreen) {
+                    elem.webkitRequestFullscreen();
+                } else if (elem.msRequestFullscreen) {
+                    elem.msRequestFullscreen();
+                }
+            }
 
-function openFullscreen() {
-  if (elem.requestFullscreen) {
-    elem.requestFullscreen();
-  } else if (elem.webkitRequestFullscreen) {
-    elem.webkitRequestFullscreen();
-  } else if (elem.msRequestFullscreen) {
-    elem.msRequestFullscreen();
-  }
-}
+            function closeFullscreen() {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
 
-function closeFullscreen() {
-  if (document.exitFullscreen) {
-    document.exitFullscreen();
-  } else if (document.webkitExitFullscreen) {
-    document.webkitExitFullscreen();
-  } else if (document.msExitFullscreen) {
-    document.msExitFullscreen();
-  }
-}
+            // Toggle visibility of buttons when fullscreen changes
+            document.addEventListener("fullscreenchange", toggleFullscreenButtons);
+            document.addEventListener("webkitfullscreenchange", toggleFullscreenButtons);
+            document.addEventListener("msfullscreenchange", toggleFullscreenButtons);
 
+            function toggleFullscreenButtons() {
+                const isFull = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+                fullscreenBtn.style.display = isFull ? "none" : "inline";
+                exitFullscreenBtn.style.display = isFull ? "inline" : "none";
+            }
 
-  // Toggle visibility of buttons when fullscreen changes
-  document.addEventListener('fullscreenchange', toggleFullscreenButtons);
-  document.addEventListener('webkitfullscreenchange', toggleFullscreenButtons);
-  document.addEventListener('msfullscreenchange', toggleFullscreenButtons);
+            const backBtn = document.getElementById("backBtn");
+            backBtn.addEventListener("click", () => {
+                if (window.history.length > 1) {
+                    window.history.back();
+                } else {
+                    alert("No previous page to go back to.");
+                }
+            });
 
-  function toggleFullscreenButtons() {
-  const isFull = document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
-  fullscreenBtn.style.display = isFull ? 'none' : 'inline';
-  exitFullscreenBtn.style.display = isFull ? 'inline' : 'none';
-}
-
-
-/* =====================================================================
+            /* =====================================================================
    Soroban – pro-level touch & gesture layer
    ===================================================================== */
-(() => {
-  /* ───────── config knobs ────────────────────────────────────────── */
-  const DEAD_ZONE    = 10;      // px you must drag before a move “counts”
-  const SWIPE_DELAY  = 40;      // ms between rod copy actions while sliding
-  const SHAKE_G      = 16;      // accel magnitude (m/s²) to trigger reset
-  const HAPTIC_MS    = 12;      // vibration length per snap (0 = off)
+            (() => {
+                /* ───────── config knobs ────────────────────────────────────────── */
+                const DEAD_ZONE = 10; // px you must drag before a move “counts”
+                const SWIPE_DELAY = 40; // ms between rod copy actions while sliding
+                const SHAKE_G = 16; // accel magnitude (m/s²) to trigger reset
+                const HAPTIC_MS = 12; // vibration length per snap (0 = off)
 
-  /* ───────── shorthand ──────────────────────────────────────────── */
-  const $ = s => document.querySelector(s);
-  const $$ = s => [...document.querySelectorAll(s)];
+                /* ───────── shorthand ──────────────────────────────────────────── */
+                const $ = (s) => document.querySelector(s);
+                const $$ = (s) => [...document.querySelectorAll(s)];
 
-  /* ───────── per-finger state store ─────────────────────────────── */
-  const touches = new Map();  // pointerId → { bead, region, startX, startY,
-                              //                     lastRod, mode, moved }
+                /* ───────── per-finger state store ─────────────────────────────── */
+                const touches = new Map(); // pointerId → { bead, region, startX, startY,
+                //                     lastRod, mode, moved }
 
-  /* ───────── helper: activate/deactivate a bead (and its column) ── */
-  function setBead(bead, makeActive) {
-    const heaven = bead.classList.contains('heaven');
+                /* ───────── helper: activate/deactivate a bead (and its column) ── */
+                function setBead(bead, makeActive) {
+                    const heaven = bead.classList.contains("heaven");
 
-    if (heaven) {
-      bead.classList.toggle('active', makeActive);
-    } else {                    // earth bead chain logic
-      const earths = [...bead.parentElement.children];
-      const idx    = earths.indexOf(bead);
-      if (makeActive) {
-        for (let i = idx; i >= 0; i--) earths[i].classList.add('active');
-      } else {
-        for (let i = idx; i < earths.length; i++) earths[i].classList.remove('active');
-      }
-    }
-    if (HAPTIC_MS) navigator.vibrate(HAPTIC_MS);
-  }
+                    if (heaven) {
+                        bead.classList.toggle("active", makeActive);
+                    } else {
+                        // earth bead chain logic
+                        const earths = [...bead.parentElement.children];
+                        const idx = earths.indexOf(bead);
+                        if (makeActive) {
+                            for (let i = idx; i >= 0; i--) earths[i].classList.add("active");
+                        } else {
+                            for (let i = idx; i < earths.length; i++) earths[i].classList.remove("active");
+                        }
+                    }
+                    if (HAPTIC_MS) navigator.vibrate(HAPTIC_MS);
+                }
 
-  /* ───────── gesture setup on every bead ────────────────────────── */
-  $$('.soroban').forEach(board => board.style.touchAction = 'none');
-  $$('.bead').forEach(bead => {
-    bead.addEventListener('pointerdown', onDown);
-    bead.addEventListener('pointermove', onMove);
-    bead.addEventListener('pointerup',   onUpCancel);
-    bead.addEventListener('pointercancel', onUpCancel);
-  });
+                /* ───────── gesture setup on every bead ────────────────────────── */
+                $$(".soroban").forEach((board) => (board.style.touchAction = "none"));
+                $$(".bead").forEach((bead) => {
+                    bead.addEventListener("pointerdown", onDown);
+                    bead.addEventListener("pointermove", onMove);
+                    bead.addEventListener("pointerup", onUpCancel);
+                    bead.addEventListener("pointercancel", onUpCancel);
+                });
 
-  function onDown (e) {
-    const bead   = e.currentTarget;
-    bead.setPointerCapture(e.pointerId);
-    bead.classList.add('pressed');
+                function onDown(e) {
+                    const bead = e.currentTarget;
+                    bead.setPointerCapture(e.pointerId);
+                    bead.classList.add("pressed");
 
-    touches.set(e.pointerId, {
-      bead,
-      region   : bead.classList.contains('heaven') ? 'heaven' : 'earth',
-      startX   : e.clientX,
-      startY   : e.clientY,
-      lastRod  : bead.closest('.rod'),
-      mode     : null,        // 'activate' | 'deactivate' (decided after drag)
-      moved    : false,
-      lastCopy : performance.now()
-    });
-  }
+                    touches.set(e.pointerId, {
+                        bead,
+                        region: bead.classList.contains("heaven") ? "heaven" : "earth",
+                        startX: e.clientX,
+                        startY: e.clientY,
+                        lastRod: bead.closest(".rod"),
+                        mode: null, // 'activate' | 'deactivate' (decided after drag)
+                        moved: false,
+                        lastCopy: performance.now(),
+                    });
+                }
 
-  function onMove (e) {
-    const t = touches.get(e.pointerId);
-    if (!t) return;
+                function onMove(e) {
+                    const t = touches.get(e.pointerId);
+                    if (!t) return;
 
-    const dy = e.clientY - t.startY;
-    const dx = e.clientX - t.startX;
-    if (!t.moved && Math.hypot(dx, dy) > DEAD_ZONE) t.moved = true;
+                    const dy = e.clientY - t.startY;
+                    const dx = e.clientX - t.startX;
+                    if (!t.moved && Math.hypot(dx, dy) > DEAD_ZONE) t.moved = true;
 
-    /* decide the up-vs-down intention once per drag ---------------- */
-    if (t.mode === null && t.moved) {
-      if (t.region === 'heaven') {
-        t.mode = (dy > 0) ? 'activate' : 'deactivate';
-      } else {                       // earth
-        t.mode = (dy < 0) ? 'activate' : 'deactivate';
-      }
-      /* apply to the bead we started on */
-      setBead(t.bead, t.mode === 'activate');
-    }
+                    /* decide the up-vs-down intention once per drag ---------------- */
+                    if (t.mode === null && t.moved) {
+                        if (t.region === "heaven") {
+                            t.mode = dy > 0 ? "activate" : "deactivate";
+                        } else {
+                            // earth
+                            t.mode = dy < 0 ? "activate" : "deactivate";
+                        }
+                        /* apply to the bead we started on */
+                        setBead(t.bead, t.mode === "activate");
+                    }
 
-    /* side-sweep: if we crossed into a new rod, copy the action ----- */
-    if (t.mode && performance.now() - t.lastCopy > SWIPE_DELAY) {
-      const elem  = document.elementFromPoint(e.clientX, e.clientY);
-      const rod   = elem?.closest?.('.rod');
-      if (rod && rod !== t.lastRod) {
-        const target = t.region === 'heaven'
-                     ? rod.querySelector('.bead.heaven')
-                     : [...rod.querySelectorAll('.bead.earth')].pop(); // bottom earth
-        if (target) setBead(target, t.mode === 'activate');
-        t.lastRod = rod;
-        t.lastCopy = performance.now();
-      }
-    }
-  }
+                    /* side-sweep: if we crossed into a new rod, copy the action ----- */
+                    if (t.mode && performance.now() - t.lastCopy > SWIPE_DELAY) {
+                        const elem = document.elementFromPoint(e.clientX, e.clientY);
+                        const rod = elem?.closest?.(".rod");
 
-  function onUpCancel (e) {
-    const t = touches.get(e.pointerId);
-    if (!t) return;
-    t.bead.classList.remove('pressed');
-    touches.delete(e.pointerId);
-  }
+                        if (rod && rod !== t.lastRod) {
+                            const otherBead = rod.querySelector(`.bead.${t.region}`);
+                            if (otherBead) {
+                                setBead(otherBead, t.mode === "activate");
+                                t.lastRod = rod;
+                                t.lastCopy = performance.now();
+                            }
+                            // bottom earth
+                            if (target) setBead(target, t.mode === "activate");
+                            t.lastRod = rod;
+                            t.lastCopy = performance.now();
+                        }
+                    }
+                }
 
-  /* ───────── shake-to-reset logic (optional) ─────────────────────── */
-  if (window.DeviceMotionEvent) {
-    let last = 0;
-    window.addEventListener('devicemotion', ev => {
-      const { x, y, z } = ev.accelerationIncludingGravity;
-      const mag = Math.hypot(x, y, z);
-      const now = performance.now();
-      if (mag > SHAKE_G && now - last > 750) {   // cooldown so it won’t triple-fire
-        clearBoard();
-        last = now;
-      }
-    });
-  }
+                function onUpCancel(e) {
+                    const t = touches.get(e.pointerId);
+                    if (!t) return;
+                    t.bead.classList.remove("pressed");
+                    touches.delete(e.pointerId);
+                }
 
-  function clearBoard () { $$('.bead.active').forEach(b => b.classList.remove('active')); }
+                /* ───────── shake-to-reset logic (optional) ─────────────────────── */
+                if (window.DeviceMotionEvent) {
+                    let last = 0;
+                    window.addEventListener("devicemotion", (ev) => {
+                        const { x, y, z } = ev.accelerationIncludingGravity;
+                        const mag = Math.hypot(x, y, z);
+                        const now = performance.now();
+                        if (mag > SHAKE_G && now - last > 750) {
+                            // cooldown so it won’t triple-fire
+                            clearBoard();
+                            last = now;
+                        }
+                    });
+                }
 
-})();
-</script>
-
-</body>
+                function clearBoard() {
+                    $$(".bead.active").forEach((b) => b.classList.remove("active"));
+                }
+            })();
+        </script>
+    </body>
 </html>
- 
