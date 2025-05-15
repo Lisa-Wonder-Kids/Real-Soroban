@@ -11,6 +11,8 @@
       overflow: hidden;
       width: 100vw;
       height: 100dvh;
+      max-width: 100vw;
+      max-height: 100dvh;
       background: white;
       display: flex;
       justify-content: center;
@@ -31,16 +33,13 @@
     }
 
     .soroban {
-      padding: 20px; /* increase from 10px */
       display: flex;
       justify-content: center;
       align-items: center;
       background: #9999ff;
-      padding: 10px;
-      border-radius: 5px;
+      padding: 5px;
       box-shadow: 0 0 15px rgba(0,0,0,0.3);
       overflow: hidden;
-      gap: 10px; /* ← NEW: space between rods */
     }
 
     .rod {
@@ -59,7 +58,7 @@
       position: absolute;
       top: 0;
       bottom: 0;
-      width: 4px;
+      width: 3px;
       background: #6666ff;
       z-index: 0;
     }
@@ -70,7 +69,7 @@
       justify-content: flex-end;
       align-items: center;
       height: 12%;
-      gap: 5px;
+      gap: 2px;
       z-index: 1;
     }
 
@@ -85,24 +84,25 @@
       justify-content: flex-start;
       align-items: center;
       height: 52%;
-      margin-top: 5px;
+      margin-top: 2px;
       z-index: 1;
-      gep: 5px;
+      gap: 5px;
     }
 
     .bar {
       position: absolute;
-      top: 30%;
+      top: 27%;
       width: 100%;
-      height: 8px;
+      height: 3px;
       background: #6666ff;
       z-index: 2;
     }
 
     .bead {
-      width: 60px;
-      height: 40px;
-      background: linear-gradient(to bottom, #000080, #000033); /* You     can customize the       color */
+      width: 90px;
+      height: 60px;
+      margin: 0;
+      background: linear-gradient(to bottom, #000080, #000033); 
       clip-path: polygon(
        25% 0%, 75% 0%,
        100% 50%,
@@ -124,7 +124,7 @@
     }
 
     .bead.heaven.active {
-      transform: translateY(150%);
+      transform: translateY(100%);
     }
 
    .bead.earth.active {
@@ -132,38 +132,30 @@
      }
 
 
-    @media (max-width: 768px) {
-      .soroban {
-        flex-wrap: wrap;
-        gap: 8px;
-      }
+   @media (max-width: 768px) {
+  .rod {
+    width: 60px;
+    height: 220px;
+  }
 
-      .rod {
-        width: 60px;
-        height: 220px;
-      }
+  .bead {
+    width: 60px;
+    height: 30px;
+  }
+}
 
-      .bead {
-        width: 40px;
-        height: 25px;
-      }
-    }
+@media (max-width: 480px) {
+  .rod {
+    width: 50px;
+    height: 200px;
+  }
 
-    @media (max-width: 480px) {
-      .soroban {
-        gap: 5px;
-      }
+  .bead {
+    width: 50px;
+    height: 25px;
+  }
+}
 
-      .rod {
-        width: 50px;
-        height: 200px;
-      }
-
-      .bead {
-        width: 35px;
-        height: 22px;
-      }
-    }
 
     @media screen and (orientation: portrait) {
       body::before {
