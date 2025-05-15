@@ -23,6 +23,17 @@
       overscroll-behavior: none;
       -webkit-tap-highlight-color: transparent;
     }
+    .button-container {
+    display: flex;
+    justify-content: center; /* center horizontally */
+    align-items: center;     /* center vertically */
+    height: 100vh;           /* full viewport height */
+    gap: 20px;               /* space between buttons */
+  }
+  button {
+    padding: 12px 24px;
+    font-size: 18px;
+  }
 
     #container {
       width: 100%;
@@ -179,6 +190,9 @@
   </style>
 </head>
 <body>
+ <button onclick="openFullscreen()">Open Fullscreen</button>
+<button onclick="closeFullscreen()">Exit Fullscreen</button>
+
   <div id="container">
     <div class="soroban">
       <!-- 7 rods -->
@@ -219,6 +233,28 @@
     </div>
   </div>
 <script>
+  var elem = document.documentElement;
+
+  function openFullscreen() {
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen();
+    } else if (elem.webkitRequestFullscreen) {
+      elem.webkitRequestFullscreen();
+    } else if (elem.msRequestFullscreen) {
+      elem.msRequestFullscreen();
+    }
+  }
+
+  function closeFullscreen() {
+    if (document.exitFullscreen) {
+      document.exitFullscreen();
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    }
+  }
+
 /* =====================================================================
    Soroban – pro-level touch & gesture layer
    ===================================================================== */
